@@ -1,5 +1,5 @@
 import { useState, useEffect, Suspense, useMemo } from 'react';
-import { ChevronDown, MapPinned, Warehouse, Zap } from 'lucide-react';
+import { ChevronDown, MapPinned, Warehouse, Zap, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUserAccess } from '../../hooks/useUserAccess';
 import axios from 'axios';
@@ -276,7 +276,7 @@ export default function DashboardHome() {
     }
   }, [realtimeData]);
 
-  const handleTransformerSelect = async (transformerId: number, regionName?: string, depotName?: string) => {
+  const handleTransformerSelect = async (transformerId: number, regionName?: string, depotName?: string, districtName?: string) => {
     const base = baseTransformers.find(x => x.id === transformerId);
     const depotId = base?.depot?.id ?? base?.depotId;
     const depot = typeof depotId === 'number' ? depots.find(d => d.id === depotId) : undefined;
@@ -334,9 +334,14 @@ export default function DashboardHome() {
       sensors: sensorList,
       recent_readings: [],
     });
+    if (regionName) {
+      setOpenRegions(prev => ({ ...prev, [regionName]: true }));
+    }
+    if (regionName && districtName) {
+      setOpenDistricts(prev => ({ ...prev, [`${regionName}::${districtName}`]: true }));
+    }
     if (regionName && depotName) {
-      setOpenRegions({ [regionName]: true });
-      setOpenDepots({ [`${regionName}::${depotName}`]: true });
+      setOpenDepots(prev => ({ ...prev, [`${regionName}::${districtName}::${depotName}`]: true }));
     }
   };
 
@@ -381,10 +386,25 @@ export default function DashboardHome() {
         </div>
       </div>
 
+      {/* Global Alerts Banner */}
+      {Object.values(transformerSensors).flat().some(u => u.is_alert) && (
+        <div className="rounded-xl border border-yellow-200 ring-1 ring-inset ring-yellow-200/60 bg-gradient-to-r from-yellow-50 to-orange-100 px-4 py-3 shadow-md dark:from-yellow-900/20 dark:to-orange-900/20 dark:border-yellow-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-600" />
+              <span className="text-sm font-semibold text-orange-700 dark:text-orange-300">Active alerts detected across transformers</span>
+            </div>
+            <span className="text-xs text-orange-700 dark:text-orange-300">
+              {Object.values(transformerSensors).reduce((acc, arr) => acc + arr.filter(a => a.is_alert).length, 0)} total
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards - conditionally render based on access level */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {hasNationalAccess() && (
-          <div className="group relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl dark:bg-gray-800/80 dark:hover:bg-gray-800/90">
+          <div className="group relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ring-1 ring-inset ring-gray-200 dark:bg-gray-800/80 dark:hover:bg-gray-800/90 dark:ring-gray-700">
             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-brand-100 opacity-20 transition-all duration-500 group-hover:scale-110 dark:bg-brand-900"></div>
             <div className="relative z-10 flex items-center">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-md">
@@ -404,7 +424,7 @@ export default function DashboardHome() {
         )}
 
         {(hasNationalAccess() || hasRegionAccess()) && (
-          <div className="group relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl dark:bg-gray-800/80 dark:hover:bg-gray-800/90">
+          <div className="group relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ring-1 ring-inset ring-gray-200 dark:bg-gray-800/80 dark:hover:bg-gray-800/90 dark:ring-gray-700">
             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-light-100 opacity-20 transition-all duration-500 group-hover:scale-110 dark:bg-blue-light-900"></div>
             <div className="relative z-10 flex items-center">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-light-400 to-blue-light-600 shadow-md">
@@ -423,7 +443,7 @@ export default function DashboardHome() {
           </div>
         )}
 
-        <div className="group relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl dark:bg-gray-800/80 dark:hover:bg-gray-800/90">
+        <div className="group relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ring-1 ring-inset ring-gray-200 dark:bg-gray-800/80 dark:hover:bg-gray-800/90 dark:ring-gray-700">
           <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-success-100 opacity-20 transition-all duration-500 group-hover:scale-110 dark:bg-success-900"></div>
           <div className="relative z-10 flex items-center">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-success-400 to-success-600 shadow-md">
@@ -441,7 +461,7 @@ export default function DashboardHome() {
           <div className="mt-4 h-1 w-full bg-gradient-to-r from-success-100 to-success-300 rounded-full dark:from-success-800 dark:to-success-600"></div>
         </div>
 
-        <div className="group relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl dark:bg-gray-800/80 dark:hover:bg-gray-800/90">
+        <div className="group relative overflow-hidden rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ring-1 ring-inset ring-gray-200 dark:bg-gray-800/80 dark:hover:bg-gray-800/90 dark:ring-gray-700">
           <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-orange-100 opacity-20 transition-all duration-500 group-hover:scale-110 dark:bg-orange-900"></div>
           <div className="relative z-10 flex items-center">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 shadow-md">
@@ -464,7 +484,7 @@ export default function DashboardHome() {
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* Left Side: Hierarchy Tree - conditionally render based on access level */}
         {true && (
-          <div className="lg:w-1/3 xl:w-1/4 rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
+          <div className="lg:w-1/3 xl:w-1/4 rounded-2xl bg-gradient-to-br from-slate-50 to-white p-4 shadow-lg backdrop-blur-sm border border-slate-200/60 ring-1 ring-inset ring-slate-200 dark:from-gray-900/40 dark:to-gray-800/40 dark:border-gray-700/60 dark:ring-gray-700">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Monitored Transformers</h3>
               <div className="flex items-center space-x-2">
@@ -472,7 +492,7 @@ export default function DashboardHome() {
                 <span className="text-sm text-brand-600 dark:text-brand-400">Live</span>
               </div>
             </div>
-            <div className="h-[70vh] overflow-y-auto scrollbar-white rounded-xl border border-gray-200/50 bg-gradient-to-br from-gray-50 to-white p-3 backdrop-blur-sm dark:border-gray-700/50 dark:from-gray-900/50 dark:to-gray-800/50">
+            <div className="h-[70vh] overflow-y-auto scrollbar-white rounded-xl border border-slate-300/50 ring-1 ring-inset ring-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 backdrop-blur-sm dark:border-gray-700/50 dark:ring-gray-700 dark:from-gray-900/50 dark:to-gray-800/50">
               {Object.entries(hierarchy).map(([region, distMap]) => (
                 <details key={region} className="mb-3 group" open={!!openRegions[region]}>
                   <summary onClick={(e) => { e.preventDefault(); setOpenRegions(prev => ({ ...prev, [region]: !prev[region] })); }} className="flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800">
@@ -525,11 +545,15 @@ export default function DashboardHome() {
                                   const alertCount = realTimeSensors.filter(sensor => sensor.is_alert).length;
 
                                   return (
-                                    <li key={t.id} className="flex items-center justify-between rounded-lg px-3 py-2 bg-white shadow-sm hover:shadow-md border border-gray-200/60 dark:border-gray-700/60 dark:bg-gray-800 transition">
-                                      <button className="text-left flex-1" onClick={() => handleTransformerSelect(t.id, region, depot)}>
+                                    <li key={t.id} className={`flex items-center justify-between rounded-lg px-3 py-2 shadow-sm hover:shadow-md border transition
+                                      ${selectedTransformer?.id === t.id
+                                        ? 'bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200'
+                                        : 'bg-slate-50 border-slate-300/60 ring-1 ring-inset ring-slate-200 dark:border-gray-700/60 dark:ring-gray-700 dark:bg-gray-800'}
+                                    `}>
+                                      <button className="text-left flex-1" onClick={() => handleTransformerSelect(t.id, region, depot, district)}>
                                         <div className="flex items-center gap-2">
                                           <Zap className={`w-4 h-4 ${t.is_active ? 'text-success' : 'text-danger'}`} />
-                                          <span className="text-sm font-medium text-gray-900 dark:text-white">{t.name}</span>
+                                          <span className="text-xs font-medium text-gray-900 dark:text-white">{t.name}</span>
                                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${t.is_active ? 'bg-success bg-opacity-10 text-success dark:bg-opacity-20' : 'bg-danger bg-opacity-10 text-danger dark:bg-opacity-20'}`}>{t.is_active ? 'Active' : 'Inactive'}</span>
                                           {alertCount > 0 && (
                                             <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-danger bg-opacity-10 text-danger dark:bg-opacity-20">
@@ -537,7 +561,7 @@ export default function DashboardHome() {
                                             </span>
                                           )}
                                         </div>
-                                        <div className="text-xs text-gray-500 dark:text-gray-400">ID: {t.transformer_id} • {t.capacity} MVA • {t.sensor_count} sensors</div>
+                                        <div className="text-[11px] text-gray-500 dark:text-gray-400">ID: {t.transformer_id} • {t.capacity} MVA • {t.sensor_count} sensors</div>
                                       </button>
                                     </li>
                                   );
@@ -621,7 +645,7 @@ export default function DashboardHome() {
 
         {/* Right Side: Selected Transformer Details */}
         <div className={`lg:w-2/3 xl:w-3/4`}>
-          <div className="rounded-2xl bg-white/80 p-4 shadow-lg backdrop-blur-sm dark:bg-gray-800/80">
+          <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-white p-4 shadow-lg backdrop-blur-sm border border-slate-200/60 ring-1 ring-inset ring-slate-200 dark:from-gray-900/40 dark:to-gray-800/40 dark:border-gray-700/60 dark:ring-gray-700">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Transformer Details</h3>
               <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
