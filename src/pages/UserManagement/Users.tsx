@@ -3,6 +3,9 @@ import { useAuth } from "../../context/AuthContext";
 import axios from 'axios';
 import type { AxiosError } from 'axios';
 import Alert from '../../components/ui/alert/Alert';
+import { ActionMenu } from '../../components/ui/dropdown/ActionMenu';
+import Button from '../../components/ui/button/Button';
+import { Plus } from 'lucide-react';
 import { Modal } from '../../components/ui/modal';
 
 interface RegionOption { id: number; name: string }
@@ -338,7 +341,7 @@ export default function Users() {
             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           />
           
-          <button onClick={() => {
+          <Button size="xs" onClick={() => {
             setFirstnameInput('');
             setLastnameInput('');
             setEmailInput('');
@@ -353,7 +356,7 @@ export default function Users() {
             setActive(null);
             setFormError(null);
             setShowCreate(true);
-          }} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text.white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Add User</button>
+          }} startIcon={<Plus className="w-4 h-4" />}>Add User</Button>
         </div>
       </div>
 
@@ -372,9 +375,7 @@ export default function Users() {
                 
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -395,9 +396,19 @@ export default function Users() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role ?? '—'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phone ?? '—'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button onClick={() => { setActive(user); setShowView(true); }} className="text-gray-700 hover:text-gray-900 mr-4">View</button>
-                      <button onClick={() => handleEditUser(user)} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-                      <button onClick={() => openChangePassword(user)} className="text-gray-700 hover:text-gray-900">Change Password</button>
+                      <ActionMenu
+                        onView={() => { setActive(user); setShowView(true); }}
+                        onEdit={() => handleEditUser(user)}
+                        extras={[{
+                          label: 'Change Password',
+                          onClick: () => openChangePassword(user),
+                          icon: (
+                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M10 1.667a4.167 4.167 0 00-4.167 4.166v2.5H4.167A1.667 1.667 0 002.5 10v6.667A1.667 1.667 0 004.167 18.333h11.666A1.667 1.667 0 0017.5 16.667V10a1.667 1.667 0 00-1.667-1.667h-1.666v-2.5A4.167 4.167 0 0010 1.667zm-2.5 6.666v-2.5a2.5 2.5 0 115 0v2.5h-5z" />
+                            </svg>
+                          ),
+                        }]}
+                      />
                     </td>
                   </tr>
                 );
