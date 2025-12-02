@@ -397,6 +397,7 @@ export default function Users() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phone ?? '—'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <ActionMenu
+                        placement="bottom"
                         onView={() => { setActive(user); setShowView(true); }}
                         onEdit={() => handleEditUser(user)}
                         extras={[{

@@ -16,6 +16,7 @@ interface ActionMenuProps {
   onDelete?: () => void;
   extras?: ExtraItem[];
   buttonClassName?: string;
+  placement?: "right" | "bottom";
 }
 
 export const ActionMenu: React.FC<ActionMenuProps> = ({
@@ -24,6 +25,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
   onDelete,
   extras,
   buttonClassName = "",
+  placement = "right",
 }) => {
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -85,7 +87,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
         </svg>
       </button>
 
-      <Dropdown isOpen={open} onClose={close} usePortal anchorRect={rect} placement="right">
+      <Dropdown isOpen={open} onClose={close} usePortal anchorRect={rect} placement={placement}>
         <div className="py-2">
           {onView && (
             <DropdownItem onClick={onView} onItemClick={close}>

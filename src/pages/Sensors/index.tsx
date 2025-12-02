@@ -312,6 +312,7 @@ export default function SensorsIndex() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{tName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <ActionMenu
+                          placement="bottom"
                           onView={() => openView(s)}
                           onEdit={() => openEdit(s)}
                           onDelete={() => deleteSensor(s.id)}
