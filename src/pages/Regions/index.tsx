@@ -3,6 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { Modal } from '../../components/ui/modal';
 import Alert from '../../components/ui/alert/Alert';
+import { ActionMenu } from '../../components/ui/dropdown/ActionMenu';
+import Button from '../../components/ui/button/Button';
+import { Plus } from 'lucide-react';
 
 interface Region {
   id: number;
@@ -164,7 +167,7 @@ export default function RegionsIndex() {
         <h2 className="text-xl font-semibold text-black dark:text-white">Regions</h2>
         <div className="flex items-center gap-2">
          {/* <button onClick={fetchRegions} className="rounded bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">Refresh</button> */}
-          <button onClick={openCreate} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90">Add Region</button>
+          <Button size="xs" onClick={openCreate} startIcon={<Plus className="w-4 h-4" />}>Add Region</Button>
         </div>
       </div>
 
@@ -179,7 +182,7 @@ export default function RegionsIndex() {
           </div>
           <div className="flex items-center gap-2">
             {/* <button onClick={fetchRegions} className="rounded bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">Refresh</button> */}
-            <button onClick={openCreate} className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">New Region</button>
+           {/* <Button size="xs" onClick={openCreate} startIcon={<Plus className="w-4 h-4" />}>New Region</Button> */}
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -189,7 +192,7 @@ export default function RegionsIndex() {
                 <th className="px-6 py-3"><input type="checkbox" aria-label="Select all" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={(e) => toggleSelectAll(e.target.checked)} className="h-4 w-4 rounded border-gray-300" /></th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Districts</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -210,10 +213,10 @@ export default function RegionsIndex() {
                     <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900">{region.name}</div></td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm"><span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{Array.isArray(region.districts) ? region.districts.length : 0}</span></td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="inline-flex items-center gap-3">
-                        <button onClick={() => openView(region)} className="text-gray-700 hover:text-gray-900">View</button>
-                        <button onClick={() => openEdit(region)} className="text-blue-600 hover:text-blue-900">Edit</button>
-                      </div>
+                      <ActionMenu
+                        onView={() => openView(region)}
+                        onEdit={() => openEdit(region)}
+                      />
                     </td>
                   </tr>
                 ))

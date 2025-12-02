@@ -3,6 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { Modal } from '../../components/ui/modal';
 import Alert from '../../components/ui/alert/Alert';
+import { ActionMenu } from '../../components/ui/dropdown/ActionMenu';
+import Button from '../../components/ui/button/Button';
+import { Plus } from 'lucide-react';
 
 interface Transformer {
   id: number;
@@ -247,7 +250,7 @@ export default function TransformersIndex() {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-black dark:text-white">Transformers</h2>
         <div className="flex items-center gap-2">
-          <button onClick={openCreate} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90">Add Transformer</button>
+          <Button size="xs" onClick={openCreate} startIcon={<Plus className="w-4 h-4" />}>Add Transformer</Button>
         </div>
       </div>
 
@@ -263,7 +266,7 @@ export default function TransformersIndex() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={openCreate} className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">New Transformer</button>
+            
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -275,7 +278,7 @@ export default function TransformersIndex() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Depot</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -300,11 +303,11 @@ export default function TransformersIndex() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{depotName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{t.isActive ? 'Active' : 'Inactive'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="inline-flex items-center gap-3">
-                          <button onClick={() => openView(t)} className="text-gray-700 hover:text-gray-900">View</button>
-                          <button onClick={() => openEdit(t)} className="text-blue-600 hover:text-blue-900">Edit</button>
-                          <button onClick={() => deleteTransformer(t.id)} className="text-red-600 hover:text-red-900">Delete</button>
-                        </div>
+                        <ActionMenu
+                          onView={() => openView(t)}
+                          onEdit={() => openEdit(t)}
+                          onDelete={() => deleteTransformer(t.id)}
+                        />
                       </td>
                     </tr>
                   );
