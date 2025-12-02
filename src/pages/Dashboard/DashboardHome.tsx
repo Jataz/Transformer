@@ -495,16 +495,12 @@ export default function DashboardHome() {
             <div className="h-[70vh] overflow-y-auto scrollbar-white rounded-xl border border-slate-300/50 ring-1 ring-inset ring-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 backdrop-blur-sm dark:border-gray-700/50 dark:ring-gray-700 dark:from-gray-900/50 dark:to-gray-800/50">
               {Object.entries(hierarchy).map(([region, distMap]) => (
                 <details key={region} className="mb-3 group" open={!!openRegions[region]}>
-                  <summary onClick={(e) => { e.preventDefault(); setOpenRegions(prev => ({ ...prev, [region]: !prev[region] })); }} className="flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800">
+                    <summary onClick={(e) => { e.preventDefault(); setOpenRegions(prev => ({ ...prev, [region]: !prev[region] })); }} className="flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-2">
                       <MapPinned className="w-4 h-4" />
                       <span className="font-medium">{region}</span>
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">Region</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                        {Object.values(distMap).reduce((acc, depMap) => acc + Object.values(depMap).reduce((a, l) => a + l.length, 0), 0)}
-                      </span>
                       <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
                     </div>
                   </summary>
@@ -514,12 +510,8 @@ export default function DashboardHome() {
                         <summary onClick={(e) => { e.preventDefault(); setOpenDistricts(prev => ({ ...prev, [`${region}::${district}`]: !prev[`${region}::${district}`] })); }} className="flex items-center justify-between cursor-pointer rounded-md px-3 py-2 bg-violet-50 text-violet-800 border border-violet-200 hover:bg-violet-100 transition dark:bg-violet-900/30 dark:text-violet-200 dark:border-violet-800">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{district}</span>
-                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">District</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
-                              {Object.values(depMap).reduce((acc, l) => acc + l.length, 0)}
-                            </span>
                             <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
                           </div>
                         </summary>
@@ -530,12 +522,8 @@ export default function DashboardHome() {
                                 <div className="flex items-center gap-2">
                                   <Warehouse className="w-4 h-4" />
                                   <span className="font-medium">{depot}</span>
-                                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">Depot</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
-                                    {list.length}
-                                  </span>
                                   <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
                                 </div>
                               </summary>
@@ -577,16 +565,12 @@ export default function DashboardHome() {
               ))}
               {false && Object.entries(groupedTransformers).map(([region, depots]) => (
                 <details key={region} className="mb-3 group" open={!!openRegions[region]}>
-                  <summary onClick={(e) => { e.preventDefault(); setOpenRegions(prev => ({ ...prev, [region]: !prev[region] })); }} className="flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800">
+                <summary onClick={(e) => { e.preventDefault(); setOpenRegions(prev => ({ ...prev, [region]: !prev[region] })); }} className="flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-2">
                       <MapPinned className="w-4 h-4" />
                       <span className="font-medium">{region}</span>
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">Region</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                        {Object.values(depots).reduce((acc, d) => acc + d.length, 0)}
-                      </span>
                       <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
                     </div>
                   </summary>
@@ -597,12 +581,8 @@ export default function DashboardHome() {
                           <div className="flex items-center gap-2">
                             <Warehouse className="w-4 h-4" />
                             <span className="font-medium">{depot}</span>
-                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">Depot</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/70 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
-                              {list.length}
-                            </span>
                             <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
                           </div>
                         </summary>
