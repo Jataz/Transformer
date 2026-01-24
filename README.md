@@ -88,6 +88,17 @@ template includes:
 
 All components are built with React and styled using Tailwind CSS for easy customization.
 
+## Docker Support
+
+To run the application using Docker:
+
+1. Build and run the container:
+   ```bash
+   docker-compose up --build
+   ```
+
+2. Access the application at http://localhost:3000
+
 ## Feature Comparison
 
 ### Free Version

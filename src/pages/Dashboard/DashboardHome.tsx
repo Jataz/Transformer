@@ -84,7 +84,7 @@ export default function DashboardHome() {
   const { realtimeData, isConnected, connectionError } = useRealtimeUpdates(token);
   const [transformerSensors, setTransformerSensors] = useState<Record<number, SensorUpdate[]>>({});
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
   const AUTH_PREFIX = import.meta.env.VITE_AUTH_SERVICE_PREFIX || '/auth-service';
   const TRANSFORMER_PREFIX = (import.meta.env as any).VITE_TRANSFORMER_SERVICE_PREFIX
     || (AUTH_PREFIX && AUTH_PREFIX.includes('transformer') ? AUTH_PREFIX : '/transformer-service');
