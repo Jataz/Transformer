@@ -28,7 +28,7 @@ class RealtimeService {
   private token: string | null = null;
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
   }
 
   public connect(token: string, callbacks: RealtimeServiceCallbacks): void {
