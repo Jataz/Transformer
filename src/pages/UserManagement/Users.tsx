@@ -26,8 +26,7 @@ interface User {
 
  
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-const AUTH_PREFIX = import.meta.env.VITE_AUTH_SERVICE_PREFIX || '/auth-service';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const ITEMS_PER_PAGE = 10;
 
 export default function Users() {
@@ -46,6 +45,7 @@ export default function Users() {
   const [firstnameInput, setFirstnameInput] = useState('');
   const [lastnameInput, setLastnameInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
   const [roleInput, setRoleInput] = useState('');
   const [regionInput, setRegionInput] = useState('');
@@ -104,35 +104,35 @@ export default function Users() {
   const fetchRegionsOptions = useCallback(async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/regions`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/regions`, { headers });
       const arr = Array.isArray(res.data) ? (res.data as RegionOption[]) : ((res.data?.data as RegionOption[]) ?? []);
       setRegions(arr.map((r) => ({ id: r.id, name: r.name })));
     } catch {
       setRegions([]);
     }
-  }, [API_BASE_URL, AUTH_PREFIX, token]);
+  }, [API_BASE_URL, token]);
 
   const fetchDistrictsOptions = useCallback(async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/districts`, { headers });
       const list = normalizeList<DistrictOption>(res.data);
       setDistricts(list.map(d => ({ id: d.id, name: d.name, regionId: d.region?.id ?? d.regionId, region: d.region })));
     } catch {
       setDistricts([]);
     }
-  }, [API_BASE_URL, AUTH_PREFIX, token]);
+  }, [API_BASE_URL, token]);
 
   const fetchDepotsOptions = useCallback(async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/auth/users`, { headers });
       const list = normalizeList<DepotOption>(res.data);
       setDepots(list.map(d => ({ id: d.id, name: d.name, districtId: d.district?.id ?? d.districtId, district: d.district })));
     } catch {
       setDepots([]);
     }
-  }, [API_BASE_URL, AUTH_PREFIX, token]);
+  }, [API_BASE_URL, token]);
 
   useEffect(() => {
     if (token) {
@@ -173,6 +173,7 @@ export default function Users() {
     setFirstnameInput(user.firstname ?? '');
     setLastnameInput(user.lastname ?? '');
     setEmailInput(user.email ?? '');
+    setPasswordInput('');
     setPhoneInput(user.phone ?? '');
     setRoleInput(user.role ?? '');
     setRegionInput(user.region ?? '');
@@ -681,6 +682,12 @@ export default function Users() {
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email *</label>
                 <input type="email" name="email" id="email" placeholder="Enter email" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
               </div>
+              {!editingUser && (
+                <div className="sm:col-span-3">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password *</label>
+                  <input type="password" name="password" id="password" placeholder="Enter password" required value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+                </div>
+              )}
               <div className="sm:col-span-3">
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
                 <input type="text" name="phone" id="phone" placeholder="Enter phone" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
@@ -690,6 +697,15 @@ export default function Users() {
                 <select name="role" id="role" value={roleInput} onChange={(e) => setRoleInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm">
                   <option value="">Select role</option>
                   <option value="ADMIN">ADMIN</option>
+                  <option value="BUSINESSMANAGER">BUSINESSMANAGER</option>
+                  <option value="COMMERCIALDIRECTOR">COMMERCIALDIRECTOR</option>
+                  <option value="DEPOT_FOREMAN">DEPOT_FOREMAN</option>
+                  <option value="DISTRICTMANAGER">DISTRICTMANAGER</option>
+                  <option value="FINANCEDIRECTOR">FINANCEDIRECTOR</option>
+                  <option value="LOSS_CONTROL">LOSS_CONTROL</option>
+                  <option value="MANAGINGDIRECTOR">MANAGINGDIRECTOR</option>
+                  <option value="TECHNICALDIRECTOR">TECHNICALDIRECTOR</option>
+                  <option value="TECHNICIAN">TECHNICIAN</option>
                   <option value="USER">USER</option>
                 </select>
               </div>

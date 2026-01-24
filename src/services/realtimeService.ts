@@ -25,10 +25,12 @@ class RealtimeService {
   private eventSource: EventSource | null = null;
   private callbacks: RealtimeServiceCallbacks = {};
   private baseUrl: string;
+  private transformerPrefix: string;
   private token: string | null = null;
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    this.baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    this.transformerPrefix = import.meta.env.VITE_TRANSFORMER_SERVICE_PREFIX || '/transformer-service';
   }
 
   public connect(token: string, callbacks: RealtimeServiceCallbacks): void {
@@ -41,7 +43,7 @@ class RealtimeService {
 
     // Using a workaround since EventSource doesn't support custom headers
     // We'll pass the token as a query parameter
-    const streamUrl = `${this.baseUrl}/realtime/stream/?token=${encodeURIComponent(token)}`;
+    const streamUrl = `${this.baseUrl}/api/realtime/stream/?token=${encodeURIComponent(token)}`;
 
     // Create the event source with the proper URL
     const eventSource = new EventSource(streamUrl, {
@@ -99,7 +101,7 @@ class RealtimeService {
   // Method to fetch latest sensor readings if SSE connection fails
   public async fetchLatestReadings(token: string): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/realtime/latest/`, {
+      const response = await fetch(`${this.baseUrl}${this.transformerPrefix}/realtime/latest/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

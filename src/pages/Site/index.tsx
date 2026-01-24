@@ -45,9 +45,7 @@ export default function SiteIndex() {
   const [districtName, setDistrictName] = useState<string>('');
   const [depotName, setDepotName] = useState<string>('');
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-  const TRANSFORMER_PREFIX = (import.meta.env as any).VITE_TRANSFORMER_SERVICE_PREFIX || '/transformer-service';
-  const AUTH_PREFIX = import.meta.env.VITE_AUTH_SERVICE_PREFIX || '/auth-service';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const headers = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : undefined), [token]);
 
   const normalizeList = (payload: unknown): Transformer[] => {
@@ -66,7 +64,7 @@ export default function SiteIndex() {
       try {
         setLoading(true);
         setError(null);
-        const res = await axios.get(`${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/transformers`, { headers });
+        const res = await axios.get(`${API_BASE_URL}/api/v1/transformers`, { headers });
         setItems(normalizeList(res.data));
       } catch {
         setError('Failed to load transformers');
@@ -84,7 +82,7 @@ export default function SiteIndex() {
     try {
       setDetailsLoading(true);
       setDetailsError(null);
-      const res = await axios.get(`${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/sensors/transformer/${selected.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/sensors/transformer/${selected.id}`, { headers });
       const list = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
       const parsed: Sensor[] = (list as any[]).map((s: any) => {
         const readings = Array.isArray(s.sensor_reading) ? s.sensor_reading : [];
@@ -119,7 +117,7 @@ export default function SiteIndex() {
       setSensors(parsed);
       if (selected.depotId) {
         try {
-          const dep = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots/${selected.depotId}`, { headers });
+          const dep = await axios.get(`${API_BASE_URL}/api/v1/depots/${selected.depotId}`, { headers });
           const obj = dep.data as any;
           const dn = obj?.district?.name ?? obj?.district_name ?? '';
           const rn = obj?.district?.region?.name ?? obj?.region_name ?? '';
@@ -144,7 +142,7 @@ export default function SiteIndex() {
     const fetchDistrictByDepot = async () => {
       if (!selected || !selected.depotId || districtName) return;
       try {
-        const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots/${selected.depotId}`, { headers });
+        const res = await axios.get(`${API_BASE_URL}/api/v1/depots/${selected.depotId}`, { headers });
         const obj = res.data as Record<string, unknown>;
         const dn = typeof (obj as any).district_name === 'string'
           ? ((obj as any).district_name as string)

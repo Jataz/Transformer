@@ -47,8 +47,7 @@ export default function SensorsIndex() {
 
   const [transformerFilter, setTransformerFilter] = useState<number | ''>('');
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-  const TRANSFORMER_PREFIX = (import.meta.env as any).VITE_TRANSFORMER_SERVICE_PREFIX || '/transformer-service';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const headers = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : undefined), [token]);
 
   const normalizeList = (payload: unknown): Sensor[] => {
@@ -64,7 +63,7 @@ export default function SensorsIndex() {
 
   const fetchTransformerOptions = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/transformers`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/transformers`, { headers });
       const arr = Array.isArray(res.data) ? (res.data as TransformerOption[]) : ((res.data?.data as TransformerOption[]) ?? []);
       setTransformers(arr.map((t) => ({ id: t.id, name: t.name })));
     } catch {
@@ -77,8 +76,8 @@ export default function SensorsIndex() {
       setLoading(true);
       setError(null);
       const url = typeof transformerFilter === 'number'
-        ? `${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/sensors/transformer/${transformerFilter}`
-        : `${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/sensors`;
+        ? `${API_BASE_URL}/api/v1/sensors/transformer/${transformerFilter}`
+        : `${API_BASE_URL}/api/v1/sensors`;
       const res = await axios.get(url, { headers });
       const list = normalizeList(res.data);
       setItems(list.map((s: any) => ({
@@ -118,7 +117,7 @@ export default function SensorsIndex() {
 
   const openEdit = async (row: Sensor) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/sensors/${row.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/sensors/${row.id}`, { headers });
       const s = (res.data as Sensor) || row;
       setActive(s);
       setDeviceIdInput(s.deviceId);
@@ -140,7 +139,7 @@ export default function SensorsIndex() {
 
   const openView = async (row: Sensor) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/sensors/${row.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/sensors/${row.id}`, { headers });
       setActive(res.data as Sensor);
     } catch {
       setActive(row);

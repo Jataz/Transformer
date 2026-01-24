@@ -32,8 +32,7 @@ export default function RegionsIndex() {
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ variant: 'success' | 'error' | 'info' | 'warning'; title: string; message: string } | null>(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-  const AUTH_PREFIX = import.meta.env.VITE_AUTH_SERVICE_PREFIX || '/auth-service';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const headers = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : undefined), [token]);
 
   const normalizeRegions = (payload: unknown): Region[] => {
@@ -51,14 +50,14 @@ export default function RegionsIndex() {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/regions`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/regions`, { headers });
       setRegions(normalizeRegions(res.data));
     } catch {
       setError('Failed to fetch regions');
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, AUTH_PREFIX, headers]);
+  }, [API_BASE_URL, headers]);
 
   useEffect(() => {
     if (token) fetchRegions();
@@ -73,7 +72,7 @@ export default function RegionsIndex() {
 
   const openEdit = async (region: Region) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/regions/${region.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/regions/${region.id}`, { headers });
       const r = (res.data as Region) || region;
       setActiveRegion(r);
       setNameInput(r.name);
@@ -87,7 +86,7 @@ export default function RegionsIndex() {
 
   const openView = async (region: Region) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/regions/${region.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/regions/${region.id}`, { headers });
       setActiveRegion(res.data as Region);
     } catch {
       setActiveRegion(region);
@@ -101,7 +100,7 @@ export default function RegionsIndex() {
       if (!nameInput || nameInput.trim().length < 2) { setFormError('Enter a valid name'); return; }
       setSavingCreate(true);
       setFormError(null);
-      await axios.post(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/regions/create`, { name: nameInput.trim() }, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/regions/create`, { name: nameInput.trim() }, { headers });
       setShowCreate(false);
       setNameInput('');
       await fetchRegions();
@@ -123,7 +122,7 @@ export default function RegionsIndex() {
       if (!nameInput || nameInput.trim().length < 2) { setFormError('Enter a valid name'); return; }
       setSavingEdit(true);
       setFormError(null);
-      await axios.put(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/regions/${activeRegion.id}`, { name: nameInput.trim() }, { headers });
+      await axios.put(`${API_BASE_URL}/api/v1/regions/${activeRegion.id}`, { name: nameInput.trim() }, { headers });
       setShowEdit(false);
       setActiveRegion(null);
       setNameInput('');

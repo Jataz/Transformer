@@ -37,8 +37,7 @@ export default function DepotsIndex() {
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ variant: 'success' | 'error' | 'info' | 'warning'; title: string; message: string } | null>(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-  const AUTH_PREFIX = import.meta.env.VITE_AUTH_SERVICE_PREFIX || '/auth-service';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const headers = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : undefined), [token]);
 
   const normalizeList = (payload: unknown): Depot[] => {
@@ -54,26 +53,26 @@ export default function DepotsIndex() {
 
   const fetchDistrictOptions = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/districts`, { headers });
       const arr = Array.isArray(res.data) ? (res.data as DistrictOption[]) : ((res.data?.data as DistrictOption[]) ?? []);
       setDistricts(arr.map((d) => ({ id: d.id, name: d.name })));
     } catch {
       setDistricts([]);
     }
-  }, [API_BASE_URL, AUTH_PREFIX, headers]);
+  }, [API_BASE_URL, headers]);
 
   const fetchDepots = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/depots`, { headers });
       setDepots(normalizeList(res.data));
     } catch {
       setError('Failed to fetch depots');
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, AUTH_PREFIX, headers]);
+  }, [API_BASE_URL, headers]);
 
   useEffect(() => {
     if (token) {
@@ -92,7 +91,7 @@ export default function DepotsIndex() {
 
   const openEdit = async (depot: Depot) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots/${depot.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/depots/${depot.id}`, { headers });
       const d = (res.data as Depot) || depot;
       setActiveDepot(d);
       setNameInput(d.name);
@@ -108,7 +107,7 @@ export default function DepotsIndex() {
 
   const openView = async (depot: Depot) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots/${depot.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/depots/${depot.id}`, { headers });
       setActiveDepot(res.data as Depot);
     } catch {
       setActiveDepot(depot);
@@ -123,7 +122,7 @@ export default function DepotsIndex() {
       if (!districtInput || typeof districtInput !== 'number') { setFormError('Select a district'); return; }
       setSavingCreate(true);
       setFormError(null);
-      await axios.post(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots/create`, { name: nameInput.trim(), districtId: districtInput }, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/depots/create`, { name: nameInput.trim(), districtId: districtInput }, { headers });
       setShowCreate(false);
       setNameInput('');
       setDistrictInput('');
@@ -147,7 +146,7 @@ export default function DepotsIndex() {
       if (!districtInput || typeof districtInput !== 'number') { setFormError('Select a district'); return; }
       setSavingEdit(true);
       setFormError(null);
-      await axios.put(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots/${activeDepot.id}`, { name: nameInput.trim(), districtId: districtInput }, { headers });
+      await axios.put(`${API_BASE_URL}/api/v1/depots/${activeDepot.id}`, { name: nameInput.trim(), districtId: districtInput }, { headers });
       setShowEdit(false);
       setActiveDepot(null);
       setNameInput('');
@@ -167,7 +166,7 @@ export default function DepotsIndex() {
   const deleteDepot = async (id: number) => {
     if (!window.confirm('Delete this depot?')) return;
     try {
-      await axios.delete(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots/${id}`, { headers });
+      await axios.delete(`${API_BASE_URL}/api/v1/depots/${id}`, { headers });
       await fetchDepots();
       setNotice({ variant: 'success', title: 'Depot deleted', message: 'The depot was deleted successfully.' });
       setTimeout(() => setNotice(null), 4000);

@@ -37,8 +37,7 @@ export default function DistrictsIndex() {
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ variant: 'success' | 'error' | 'info' | 'warning'; title: string; message: string } | null>(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-  const AUTH_PREFIX = import.meta.env.VITE_AUTH_SERVICE_PREFIX || '/auth-service';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const headers = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : undefined), [token]);
 
   const normalizeList = (payload: unknown): District[] => {
@@ -54,26 +53,26 @@ export default function DistrictsIndex() {
 
   const fetchRegionsOptions = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/regions`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/regions`, { headers });
       const arr = Array.isArray(res.data) ? (res.data as RegionOption[]) : ((res.data?.data as RegionOption[]) ?? []);
       setRegions(arr.map((r) => ({ id: r.id, name: r.name })));
     } catch {
       setRegions([]);
     }
-  }, [API_BASE_URL, AUTH_PREFIX, headers]);
+  }, [API_BASE_URL, headers]);
 
   const fetchDistricts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/districts`, { headers });
       setDistricts(normalizeList(res.data));
     } catch {
       setError('Failed to fetch districts');
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, AUTH_PREFIX, headers]);
+  }, [API_BASE_URL, headers]);
 
   useEffect(() => {
     if (token) {
@@ -92,7 +91,7 @@ export default function DistrictsIndex() {
 
   const openEdit = async (district: District) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts/${district.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/districts/${district.id}`, { headers });
       const d = (res.data as District) || district;
       setActiveDistrict(d);
       setNameInput(d.name);
@@ -108,7 +107,7 @@ export default function DistrictsIndex() {
 
   const openView = async (district: District) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts/${district.id}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/districts/${district.id}`, { headers });
       setActiveDistrict(res.data as District);
     } catch {
       setActiveDistrict(district);
@@ -123,7 +122,7 @@ export default function DistrictsIndex() {
       if (!regionInput || typeof regionInput !== 'number') { setFormError('Select a region'); return; }
       setSavingCreate(true);
       setFormError(null);
-      await axios.post(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts/create`, { name: nameInput.trim(), regionId: regionInput }, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/districts/create`, { name: nameInput.trim(), regionId: regionInput }, { headers });
       setShowCreate(false);
       setNameInput('');
       setRegionInput('');
@@ -147,7 +146,7 @@ export default function DistrictsIndex() {
       if (!regionInput || typeof regionInput !== 'number') { setFormError('Select a region'); return; }
       setSavingEdit(true);
       setFormError(null);
-      await axios.put(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts/${activeDistrict.id}`, { name: nameInput.trim(), regionId: regionInput }, { headers });
+      await axios.put(`${API_BASE_URL}/api/v1/districts/${activeDistrict.id}`, { name: nameInput.trim(), regionId: regionInput }, { headers });
       setShowEdit(false);
       setActiveDistrict(null);
       setNameInput('');
@@ -167,7 +166,7 @@ export default function DistrictsIndex() {
   const deleteDistrict = async (id: number) => {
     if (!window.confirm('Delete this district?')) return;
     try {
-      await axios.delete(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts/${id}`, { headers });
+      await axios.delete(`${API_BASE_URL}/api/v1/districts/${id}`, { headers });
       await fetchDistricts();
       setNotice({ variant: 'success', title: 'District deleted', message: 'The district was deleted successfully.' });
       setTimeout(() => setNotice(null), 4000);
