@@ -255,7 +255,7 @@ export default function TransformersIndex() {
             <div className="flex items-center gap-4 flex-1">
               {/* Show [N] */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded">Show</span>
+                <span className="text-sm font-bold text-brand-500 bg-brand-50 px-2 py-1 rounded">Show</span>
                 <select 
                   value={pageSize} 
                   onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} 
@@ -269,7 +269,7 @@ export default function TransformersIndex() {
 
               {/* Status [All] */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded">Status</span>
+                <span className="text-sm font-bold text-brand-500 bg-brand-50 px-2 py-1 rounded">Status</span>
                 <select 
                   value={statusFilter} 
                   onChange={(e) => { setStatusFilter(e.target.value as any); setPage(1); }} 
@@ -283,7 +283,7 @@ export default function TransformersIndex() {
 
               {/* Depot [All] - Replaces "Age" in image */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded">Depot</span>
+                <span className="text-sm font-bold text-brand-500 bg-brand-50 px-2 py-1 rounded">Depot</span>
                 <select 
                   value={depotFilter} 
                   onChange={(e) => { setDepotFilter(e.target.value ? Number(e.target.value) : ''); setPage(1); }} 
@@ -308,7 +308,7 @@ export default function TransformersIndex() {
                   placeholder="Search all records" 
                   value={search} 
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }} 
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-md leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-md leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm" 
                 />
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function TransformersIndex() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => fetchTransformers()} 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 shadow-sm"
               >
                 <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
