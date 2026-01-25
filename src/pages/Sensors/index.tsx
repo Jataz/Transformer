@@ -271,7 +271,7 @@ export default function SensorsIndex() {
            <p className="mt-1 text-sm text-gray-500">Manage and monitor your IoT sensors.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" onClick={openCreate} startIcon={<Plus className="w-4 h-4" />}>Add Sensor</Button>
+          {/* <Button size="sm" onClick={openCreate} startIcon={<Plus className="w-4 h-4" />}>Add Sensor</Button> */}
         </div>
       </div>
 

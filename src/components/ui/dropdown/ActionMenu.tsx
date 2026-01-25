@@ -16,7 +16,7 @@ interface ActionMenuProps {
   onDelete?: () => void;
   extras?: ExtraItem[];
   buttonClassName?: string;
-  placement?: "right" | "bottom";
+  placement?: "right" | "bottom" | "bottom-end";
 }
 
 export const ActionMenu: React.FC<ActionMenuProps> = ({

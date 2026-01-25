@@ -213,6 +213,7 @@ export default function RegionsIndex() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm"><span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{Array.isArray(region.districts) ? region.districts.length : 0}</span></td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <ActionMenu
+                        placement="bottom-end"
                         onView={() => openView(region)}
                         onEdit={() => openEdit(region)}
                       />

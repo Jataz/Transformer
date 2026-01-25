@@ -250,6 +250,7 @@ export default function DistrictsIndex() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{rName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <ActionMenu
+                          placement="bottom-end"
                           onView={() => openView(d)}
                           onEdit={() => openEdit(d)}
                           onDelete={() => deleteDistrict(d.id)}
