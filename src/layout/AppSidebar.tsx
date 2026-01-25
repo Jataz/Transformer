@@ -10,12 +10,16 @@ import {
   Zap,
   Activity,
   User,
-  Calendar,
-  FileText,
   Users,
   ChevronDown,
-  MoreHorizontal,
   Building,
+  LogOut,
+  Settings,
+  FileText,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Briefcase
 } from 'lucide-react';
 
 interface NavItem {
@@ -25,51 +29,83 @@ interface NavItem {
   subItems?: { name: string; path: string }[];
 }
 
-const navItems: NavItem[] = [
+interface NavGroup {
+  name: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
-    icon: <Grid className="w-5 h-5" />,
-    name: "Dashboard",
-    path: "/dashboard",
+    name: "main",
+    items: [
+      {
+        icon: <Grid className="w-5 h-5" />,
+        name: "Dashboard",
+        path: "/dashboard",
+      },
+    ],
   },
   {
-    icon: <MapPinned className="w-5 h-5" />,
-    name: "Regions",
-    path: "/regions",
+    name: "FAULTS",
+    items: [
+       // Placeholder for faults if needed, using existing items for now or strictly what is available
+       // Since I don't have specific fault routes in the original list, I will keep the original items but group them logically
+       // based on the "Transformer" context.
+       // However, the user said "look like the one shown in the picture".
+       // If the picture shows "FAULTS", "Log", "My Faults", etc., I should probably add them?
+       // But I don't have the backend/pages.
+       // I will stick to the AVAILABLE pages but grouped.
+    ]
   },
   {
-    icon: <MapPinned className="w-5 h-5" />,
-    name: "Districts",
-    path: "/districts",
+    name: "assets",
+    items: [
+      {
+        icon: <MapPinned className="w-5 h-5" />,
+        name: "Regions",
+        path: "/regions",
+      },
+      {
+        icon: <MapPinned className="w-5 h-5" />,
+        name: "Districts",
+        path: "/districts",
+      },
+      {
+        icon: <Warehouse className="w-5 h-5" />,
+        name: "Depots",
+        path: "/depots",
+      },
+      {
+        icon: <Building className="w-5 h-5" />,
+        name: "Sites",
+        path: "/sites",
+      },
+      {
+        icon: <Zap className="w-5 h-5" />,
+        name: "Transformers",
+        path: "/transformers",
+      },
+      {
+        icon: <Activity className="w-5 h-5" />,
+        name: "Sensors",
+        path: "/sensors",
+      },
+    ],
   },
   {
-    icon: <Warehouse className="w-5 h-5" />,
-    name: "Depots",
-    path: "/depots",
-  },
-  {
-    icon: <Zap className="w-5 h-5" />,
-    name: "Transformers",
-    path: "/transformers",
-  },
-  {
-    icon: <Activity className="w-5 h-5" />,
-    name: "Sensors",
-    path: "/sensors",
-  },
-    {
-    icon: <Building className="w-5 h-5" />,
-    name: "Sites",
-    path: "/sites",
-  },
-  {
-    icon: <Users className="w-5 h-5" />,
-    name: "User Management",
-    path: "/users",
-  },
-  {
-    icon: <User className="w-5 h-5" />,
-    name: "Profile",
-    path: "/profile",
+    name: "administration",
+    items: [
+      {
+        icon: <Users className="w-5 h-5" />,
+        name: "User",
+        path: "/users",
+      },
+      {
+        icon: <User className="w-5 h-5" />,
+        name: "Profile",
+        path: "/profile",
+      },
+    ],
   },
 ];
 
@@ -90,106 +126,106 @@ const AppSidebar: React.FC = () => {
   return (
     <aside
       className={`fixed left-0 top-0 flex flex-col bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200
-        ${isExpanded || isMobileOpen ? "w-[220px]" : "w-[90px]"}
+        ${isExpanded || isMobileOpen ? "w-[290px]" : "w-[90px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0`}
+        lg:translate-x-0 font-outfit`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className={`py-8 flex ${
-          !isExpanded ? "lg:justify-center" : "justify-start"
-        }`}
-      >
-        <Link to="/" aria-label="Home">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <span className="select-none font-extrabold tracking-wide text-2xl text-brand-600 dark:text-brand-400">TAIS</span>
-          ) : (
-            <span className="select-none font-extrabold tracking-wide text-lg text-brand-600 dark:text-brand-400">TAIS</span>
-          )}
+      {/* Logo Section */}
+      <div className={`h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800 ${
+        !isExpanded && !isHovered && !isMobileOpen ? "justify-center px-0" : ""
+      }`}>
+        <Link to="/" className="flex items-center gap-3">
+            {/* You can add a logo image here if available */}
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 text-white">
+              <Zap className="w-5 h-5" />
+            </div>
+            {(isExpanded || isHovered || isMobileOpen) && (
+              <span className="text-xl font-bold text-gray-900 dark:text-white">TAIS</span>
+            )}
         </Link>
       </div>
 
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
-        <nav className="mb-6">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded ? "lg:justify-center" : "justify-start"
-                }`}
-              >
-                {isExpanded || isMobileOpen ? "" : <MoreHorizontal className="size-6" />}
-              </h2>
-
-              <ul className="flex flex-col gap-2">
-                {navItems.map((item, index) => (
-                  <li key={index}>
+      <div className="flex flex-col flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar py-4">
+        <nav className="px-4 space-y-6">
+          {navGroups.map((group, groupIndex) => (
+            <div key={groupIndex}>
+              {(isExpanded || isHovered || isMobileOpen) && group.items.length > 0 && (
+                <h3 className="mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">
+                  {group.name}
+                </h3>
+              )}
+              
+              <ul className="space-y-1">
+                {group.items.map((item, index) => (
+                  <li key={`${groupIndex}-${index}`}>
                     {item.subItems ? (
-                      <button
-                        onClick={() => toggleSubmenu(`main-${index}`)}
-                        className={`w-full flex items-center py-2 px-3 rounded ${
-                          openSubmenus[`main-${index}`]
-                            ? "bg-gray-100 text-primary dark:bg-gray-700"
-                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                        }`}
-                      >
-                        <span className="mr-3">
-                          {item.icon}
-                        </span>
-                        <span className="flex-1 text-left">
-                          {(isExpanded || isMobileOpen) && item.name}
-                        </span>
-                        {(isExpanded || isMobileOpen) && (
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform duration-200 ${
-                              openSubmenus[`main-${index}`] ? "rotate-180" : ""
-                            }`}
-                          />
-                        )}
-                      </button>
-                    ) : (
-                      item.path && (
-                        <Link
-                          to={item.path}
-                          className={`flex items-center py-2 px-3 rounded group ${
-                            isActive(item.path)
-                              ? "bg-blue-600 text-white"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => toggleSubmenu(`${groupIndex}-${index}`)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                            isActive(item.path || "") 
+                              ? "bg-blue-600 text-white" 
+                              : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                           }`}
                         >
-                          <span className="mr-3">
+                          <span className={`${isActive(item.path || "") ? "text-white" : "text-gray-500"}`}>
                             {item.icon}
                           </span>
-                          {(isExpanded || isMobileOpen) && (
-                            <span>{item.name}</span>
+                          {(isExpanded || isHovered || isMobileOpen) && (
+                            <>
+                              <span className="flex-1 text-sm font-medium text-left">{item.name}</span>
+                              <ChevronDown
+                                className={`w-4 h-4 transition-transform duration-200 ${
+                                  openSubmenus[`${groupIndex}-${index}`] ? "rotate-180" : ""
+                                }`}
+                              />
+                            </>
                           )}
-                        </Link>
-                      )
-                    )}
-                    {item.subItems && openSubmenus[`main-${index}`] && (
-                      <ul className="mt-2 ml-8 space-y-1">
-                        {item.subItems.map((subItem, subIndex) => (
-                          <li key={subIndex}>
-                            <Link
-                              to={subItem.path}
-                              className={`block py-1.5 px-3 text-sm rounded ${
-                                isActive(subItem.path)
-                                  ? "bg-blue-500 text-white"
-                                  : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                              }`}
-                            >
-                              {subItem.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                        </button>
+                        
+                        {(isExpanded || isHovered || isMobileOpen) && openSubmenus[`${groupIndex}-${index}`] && (
+                          <ul className="pl-9 space-y-1">
+                            {item.subItems.map((subItem, subIndex) => (
+                              <li key={subIndex}>
+                                <Link
+                                  to={subItem.path}
+                                  className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
+                                    isActive(subItem.path)
+                                      ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                                  }`}
+                                >
+                                  {subItem.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ) : (
+                      <Link
+                        to={item.path || "#"}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                          isActive(item.path || "")
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                        }`}
+                      >
+                        <span className={`${isActive(item.path || "") ? "text-white" : "text-gray-500 group-hover:text-gray-900"}`}>
+                          {item.icon}
+                        </span>
+                        {(isExpanded || isHovered || isMobileOpen) && (
+                          <span className="text-sm font-medium">{item.name}</span>
+                        )}
+                      </Link>
                     )}
                   </li>
                 ))}
               </ul>
             </div>
-          </div>
+          ))}
         </nav>
       </div>
     </aside>
