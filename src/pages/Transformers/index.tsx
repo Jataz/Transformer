@@ -5,7 +5,7 @@ import { Modal } from '../../components/ui/modal';
 import Alert from '../../components/ui/alert/Alert';
 import { ActionMenu } from '../../components/ui/dropdown/ActionMenu';
 import Button from '../../components/ui/button/Button';
-import { Plus } from 'lucide-react';
+import { Plus, MapPin, Zap, Activity, Building2, X } from 'lucide-react';
 
 interface Transformer {
   id: number;
@@ -377,7 +377,7 @@ export default function TransformersIndex() {
                         <ActionMenu
                           onView={() => openView(t)}
                           onEdit={() => openEdit(t)}
-                          onDelete={() => deleteTransformer(t.id)}
+                         /*  onDelete={() => deleteTransformer(t.id)} */
                         />
                       </td>
                     </tr>
@@ -591,41 +591,157 @@ export function TransformerCreateModal({ open, onClose, onSubmit, name, setName,
 
 export function TransformerEditModal({ open, onClose, onSubmit, name, setName, capacity, setCapacity, isActive, setIsActive, depotId, setDepotId, lat, setLat, lng, setLng, depots, saving, error }: { open: boolean; onClose: () => void; onSubmit: (e: React.FormEvent) => void; name: string; setName: (v: string) => void; capacity: number | ''; setCapacity: (v: number | '') => void; isActive: boolean; setIsActive: (v: boolean) => void; depotId: number | ''; setDepotId: (v: number | '') => void; lat: number | ''; setLat: (v: number | '') => void; lng: number | ''; setLng: (v: number | '') => void; depots: DepotOption[]; saving?: boolean; error?: string | null; }) {
   return (
-    <Modal isOpen={open} onClose={onClose} className="max-w-lg w-full p-6" backdropBlur={false}>
+    <Modal isOpen={open} onClose={onClose} className="max-w-lg w-full overflow-hidden rounded-2xl bg-white shadow-xl transition-all" backdropBlur={true}>
       <form onSubmit={onSubmit}>
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-black dark:text-white">Edit Transformer</h3>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Name *</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter transformer name" className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Capacity (kVA) *</label>
-            <input type="number" value={capacity === '' ? '' : String(capacity)} onChange={(e) => setCapacity(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter capacity" className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
-          </div>
-          <div className="flex items-center gap-2">
-            <input id="transformer-active-edit" type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="h-4 w-4 rounded border-gray-300" />
-            <label htmlFor="transformer-active-edit" className="text-sm text-gray-700">Active</label>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Depot *</label>
-            <SearchableSelect options={depots} value={depotId} onChange={setDepotId} placeholder="Search depot" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Latitude *</label>
-              <input type="number" step="any" value={lat === '' ? '' : String(lat)} onChange={(e) => setLat(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter latitude" className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+        <div className="relative">
+          {/* Header Background */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white">Edit Transformer</h3>
+              <button 
+                type="button"
+                onClick={onClose}
+                className="rounded-full bg-white/20 p-1 text-white hover:bg-white/30 transition-colors focus:outline-none"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Longitude *</label>
-              <input type="number" step="any" value={lng === '' ? '' : String(lng)} onChange={(e) => setLng(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter longitude" className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+            <p className="mt-2 text-sm text-blue-100">Update the transformer's information and status.</p>
+          </div>
+
+          {/* Content Body */}
+          <div className="px-6 py-6">
+            <div className="space-y-5">
+              
+              {/* Name Input */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Transformer Name *</label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Zap className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input 
+                    type="text" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    placeholder="Enter transformer name" 
+                    className="block w-full rounded-lg border border-gray-200 bg-gray-50 pl-10 pr-3 py-2.5 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all" 
+                  />
+                </div>
+              </div>
+
+              {/* Capacity and Depot */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Capacity (kVA) *</label>
+                  <input 
+                    type="number" 
+                    value={capacity === '' ? '' : String(capacity)} 
+                    onChange={(e) => setCapacity(e.target.value === '' ? '' : Number(e.target.value))} 
+                    placeholder="e.g. 500" 
+                    className="block w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Depot Location *</label>
+                  <SearchableSelect options={depots} value={depotId} onChange={setDepotId} placeholder="Select depot" />
+                </div>
+              </div>
+
+              {/* Status Toggle */}
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                      <Activity className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Operational Status</p>
+                      <p className="text-xs text-gray-500">{isActive ? 'Transformer is currently active' : 'Transformer is in maintenance'}</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex cursor-pointer items-center">
+                    <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="peer sr-only" />
+                    <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20"></div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Coordinates */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Geographic Coordinates *</label>
+                <div className="grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-3 border border-gray-100">
+                  <div>
+                    <span className="block text-xs text-gray-400 mb-1">Latitude</span>
+                    <input 
+                      type="number" 
+                      step="any" 
+                      value={lat === '' ? '' : String(lat)} 
+                      onChange={(e) => setLat(e.target.value === '' ? '' : Number(e.target.value))} 
+                      placeholder="Lat" 
+                      className="block w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-sm font-mono text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <span className="block text-xs text-gray-400 mb-1">Longitude</span>
+                    <input 
+                      type="number" 
+                      step="any" 
+                      value={lng === '' ? '' : String(lng)} 
+                      onChange={(e) => setLng(e.target.value === '' ? '' : Number(e.target.value))} 
+                      placeholder="Lng" 
+                      className="block w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-sm font-mono text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="rounded-md bg-red-50 p-3">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">Error saving transformer</h3>
+                      <div className="mt-2 text-sm text-red-700">
+                        <p>{error}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 flex justify-end gap-3 border-t border-gray-100 pt-5">
+              <button 
+                type="button" 
+                onClick={onClose} 
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={saving} 
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <>
+                    <svg className="animate-spin -ml-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4A8 8 0 104 12z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
             </div>
           </div>
-          {error && <div className="text-xs text-red-600">{error}</div>}
-        </div>
-        <div className="mt-6 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">Cancel</button>
-          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">Save</button>
         </div>
       </form>
     </Modal>
@@ -634,38 +750,109 @@ export function TransformerEditModal({ open, onClose, onSubmit, name, setName, c
 
 export function TransformerViewModal({ open, onClose, transformer, depots }: { open: boolean; onClose: () => void; transformer: Transformer | null; depots: DepotOption[] }) {
   const depotName = transformer ? (depots.find(x => x.id === (transformer.depot?.id ?? transformer.depotId))?.name ?? transformer.depot?.name ?? '—') : '—';
+  
   return (
-    <Modal isOpen={open} onClose={onClose} className="max-w-lg w-full p-6" backdropBlur={false}>
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-black dark:text-white">Transformer</h3>
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <div className="text-xs text-gray-500">Name</div>
-            <div className="text-sm font-medium text-gray-900">{transformer?.name ?? '—'}</div>
+    <Modal isOpen={open} onClose={onClose} className="max-w-lg w-full overflow-hidden rounded-2xl bg-white shadow-xl transition-all" backdropBlur={true}>
+      <div className="relative">
+        {/* Header Background */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-white">Transformer Details</h3>
+            <button 
+              onClick={onClose}
+              className="rounded-full bg-white/20 p-1 text-white hover:bg-white/30 transition-colors focus:outline-none"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <div>
-            <div className="text-xs text-gray-500">Capacity</div>
-            <div className="text-sm font-medium text-gray-900">{typeof transformer?.capacity === 'number' ? `${transformer.capacity} kVA` : '—'}</div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500">Depot</div>
-            <div className="text-sm font-medium text-gray-900">{depotName}</div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500">Status</div>
-            <div className="text-sm font-medium text-gray-900">{transformer?.isActive ? 'Active' : 'Maintenance'}</div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500">Latitude</div>
-            <div className="text-sm font-medium text-gray-900">{typeof transformer?.lat === 'number' ? transformer?.lat : '—'}</div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500">Longitude</div>
-            <div className="text-sm font-medium text-gray-900">{typeof transformer?.lng === 'number' ? transformer?.lng : '—'}</div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm">
+              <Zap className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-blue-100">Transformer Name</p>
+              <p className="text-lg font-bold text-white">{transformer?.name ?? '—'}</p>
+            </div>
           </div>
         </div>
-        <div className="mt-6 flex justify-end">
-          <button onClick={onClose} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">Close</button>
+
+        {/* Content Body */}
+        <div className="px-6 py-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            
+            {/* Status */}
+            <div className="col-span-full">
+               <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
+                 <div className={`flex h-10 w-10 items-center justify-center rounded-full ${transformer?.isActive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                   <Activity className="h-5 w-5" />
+                 </div>
+                 <div>
+                   <p className="text-xs font-medium text-gray-500">Operational Status</p>
+                   <div className="flex items-center gap-2">
+                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${transformer?.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                       {transformer?.isActive ? 'ACTIVE' : 'MAINTENANCE'}
+                     </span>
+                   </div>
+                 </div>
+               </div>
+            </div>
+
+            {/* Capacity */}
+            <div className="flex items-start gap-3">
+              <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                <Zap className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Capacity</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {typeof transformer?.capacity === 'number' ? `${transformer.capacity} kVA` : '—'}
+                </p>
+              </div>
+            </div>
+
+            {/* Depot */}
+            <div className="flex items-start gap-3">
+              <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                <Building2 className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Depot Location</p>
+                <p className="text-sm font-semibold text-gray-900">{depotName}</p>
+              </div>
+            </div>
+
+            {/* Location (Lat/Lng) */}
+            <div className="col-span-full border-t border-gray-100 pt-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div className="w-full">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Geographic Coordinates</p>
+                  <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-50 p-3 text-sm">
+                    <div>
+                      <span className="block text-xs text-gray-400">Latitude</span>
+                      <span className="font-mono font-medium text-gray-700">{typeof transformer?.lat === 'number' ? transformer.lat : '—'}</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-gray-400">Longitude</span>
+                      <span className="font-mono font-medium text-gray-700">{typeof transformer?.lng === 'number' ? transformer.lng : '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div className="mt-8 flex justify-end">
+            <button 
+              onClick={onClose} 
+              className="rounded-lg bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </Modal>
