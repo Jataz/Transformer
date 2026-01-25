@@ -7,6 +7,7 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
   login: (username: string, password: string, remember?: boolean) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
+  updateUser: (updatedData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -93,6 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email: data?.email ?? '',
           first_name: data?.firstname ?? data?.first_name ?? '',
           last_name: data?.lastname ?? data?.last_name ?? '',
+          phone: data?.phone ?? '',
         };
         storage.setItem('user', JSON.stringify(userInfo));
 
@@ -197,8 +200,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => window.removeEventListener('storage', onStorage);
   }, [token]);
 
+  const updateUser = (updatedData: Partial<User>) => {
+    setUser((prevUser) => {
+      if (!prevUser) return null;
+      const newUser = { ...prevUser, ...updatedData };
+      if (localStorage.getItem('user')) {
+        localStorage.setItem('user', JSON.stringify(newUser));
+      }
+      if (sessionStorage.getItem('user')) {
+        sessionStorage.setItem('user', JSON.stringify(newUser));
+      }
+      return newUser;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
