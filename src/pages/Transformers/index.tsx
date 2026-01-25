@@ -222,7 +222,7 @@ export default function TransformersIndex() {
     return (
       t.name.toLowerCase().includes(q) ||
       String(t.capacity ?? '').toLowerCase().includes(q) ||
-      (t.isActive ? 'active' : 'inactive').includes(q) ||
+      (t.isActive ? 'active' : 'maintenance').includes(q) ||
       depotName.toLowerCase().includes(q)
     );
   });
@@ -299,7 +299,7 @@ export default function TransformersIndex() {
                       <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900">{t.name}</div></td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{typeof t.capacity === 'number' ? t.capacity : '—'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{depotName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{t.isActive ? 'Active' : 'Inactive'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{t.isActive ? 'Active' : 'Maintenance'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <ActionMenu
                           onView={() => openView(t)}
@@ -557,7 +557,7 @@ export function TransformerViewModal({ open, onClose, transformer, depots }: { o
           </div>
           <div>
             <div className="text-xs text-gray-500">Status</div>
-            <div className="text-sm font-medium text-gray-900">{transformer?.isActive ? 'Active' : 'Inactive'}</div>
+            <div className="text-sm font-medium text-gray-900">{transformer?.isActive ? 'Active' : 'Maintenance'}</div>
           </div>
           <div>
             <div className="text-xs text-gray-500">Latitude</div>
