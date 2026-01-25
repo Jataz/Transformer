@@ -27,10 +27,10 @@ export default function TransformersIndex() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'MAINTENANCE'>('ALL');
   const [depotFilter, setDepotFilter] = useState<number | ''>('');
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [pageSize, setPageSize] = useState(10);
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showView, setShowView] = useState(false);
@@ -216,6 +216,10 @@ export default function TransformersIndex() {
   };
 
   const filtered = items.filter((t) => {
+    // Status Filter
+    if (statusFilter === 'ACTIVE' && !t.isActive) return false;
+    if (statusFilter === 'MAINTENANCE' && t.isActive) return false;
+
     const q = search.trim().toLowerCase();
     if (!q) return true;
     const depotName = depots.find(x => x.id === (t.depot?.id ?? t.depotId))?.name ?? '';
@@ -226,16 +230,8 @@ export default function TransformersIndex() {
       depotName.toLowerCase().includes(q)
     );
   });
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedIds(paginated.map((t) => t.id));
-    else setSelectedIds([]);
-  };
-  const toggleSelectOne = (id: number, checked: boolean) => {
-    setSelectedIds((prev) => (checked ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id)));
-  };
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   if (loading) return <div className="p-4">Loading transformers...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
@@ -252,41 +248,113 @@ export default function TransformersIndex() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-white shadow-sm dark:bg-gray-900">
-        <div className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <input type="text" placeholder="Search..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm w-[240px]" />
-            <div className="w-[260px]">
-              <SearchableSelect options={depots} value={depotFilter} onChange={(v) => { setDepotFilter(v); setPage(1); }} placeholder="Filter by depot" />
+      <div className="rounded-xl bg-white shadow-sm dark:bg-gray-900 border border-gray-100">
+        <div className="p-4 border-b border-gray-100 space-y-4">
+          {/* Top Filter Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              {/* Show [N] */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded">Show</span>
+                <select 
+                  value={pageSize} 
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} 
+                  className="text-sm border-none bg-transparent font-medium focus:ring-0 cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              {/* Status [All] */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded">Status</span>
+                <select 
+                  value={statusFilter} 
+                  onChange={(e) => { setStatusFilter(e.target.value as any); setPage(1); }} 
+                  className="text-sm border-none bg-transparent font-medium focus:ring-0 cursor-pointer"
+                >
+                  <option value="ALL">All</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="MAINTENANCE">Maintenance</option>
+                </select>
+              </div>
+
+              {/* Depot [All] - Replaces "Age" in image */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded">Depot</span>
+                <select 
+                  value={depotFilter} 
+                  onChange={(e) => { setDepotFilter(e.target.value ? Number(e.target.value) : ''); setPage(1); }} 
+                  className="text-sm border-none bg-transparent font-medium focus:ring-0 cursor-pointer max-w-[150px]"
+                >
+                  <option value="">All</option>
+                  {depots.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search Bar */}
+              <div className="flex-1 max-w-md relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Search all records" 
+                  value={search} 
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }} 
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-md leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                />
+              </div>
             </div>
-            {typeof depotFilter === 'number' && (
-              <button onClick={() => setDepotFilter('')} className="rounded bg-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-300">Clear</button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            
+
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => fetchTransformers()} 
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Search
+              </button>
+              <button 
+                onClick={() => { setSearch(''); setStatusFilter('ALL'); setDepotFilter(''); setPage(1); }} 
+                className="inline-flex items-center px-4 py-2 border border-yellow-500 text-sm font-medium rounded-md text-yellow-600 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset
+              </button>
+            </div>
           </div>
         </div>
+
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full">
+            <thead className="bg-white border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3"><input type="checkbox" aria-label="Select all" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={(e) => toggleSelectAll(e.target.checked)} className="h-4 w-4 rounded border-gray-300" /></th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Depot</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Transformer</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Capacity</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">Action(s)</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-600">
+                  <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
                     No transformers found.
                     <div className="mt-4 flex items-center justify-center gap-2">
-                      {/* <button onClick={fetchTransformers} className="rounded bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">Refresh</button> */}
-                      <button onClick={openCreate} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90">Add Transformer</button>
+                      <button onClick={openCreate} className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Add Transformer</button>
                     </div>
                   </td>
                 </tr>
@@ -295,12 +363,17 @@ export default function TransformersIndex() {
                   const depotName = depots.find(x => x.id === (t.depot?.id ?? t.depotId))?.name ?? t.depot?.name ?? '—';
                   return (
                     <tr key={t.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.includes(t.id)} onChange={(e) => toggleSelectOne(t.id, e.target.checked)} className="h-4 w-4 rounded border-gray-300" /></td>
-                      <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900">{t.name}</div></td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{typeof t.capacity === 'number' ? t.capacity : '—'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{depotName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{t.isActive ? 'Active' : 'Maintenance'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-700">{t.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{depotName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{typeof t.capacity === 'number' ? `${t.capacity} kVA` : '—'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${t.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {t.isActive ? 'ACTIVE' : 'MAINTENANCE'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <ActionMenu
                           onView={() => openView(t)}
                           onEdit={() => openEdit(t)}
@@ -316,24 +389,47 @@ export default function TransformersIndex() {
         </div>
         {totalPages > 1 && (
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</button>
+            </div>
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-gray-700">Showing <span className="font-medium">{(page - 1) * PAGE_SIZE + 1}</span> to <span className="font-medium">{Math.min(page * PAGE_SIZE, filtered.length)}</span> of <span className="font-medium">{filtered.length}</span> results</p>
+                <p className="text-sm text-gray-500">
+                  Showing <span className="font-medium text-gray-900">{(page - 1) * pageSize + 1}</span> to <span className="font-medium text-gray-900">{Math.min(page * pageSize, filtered.length)}</span> of <span className="font-medium text-gray-900">{filtered.length}</span> results
+                </p>
               </div>
               <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <button onClick={() => setPage(1)} disabled={page === 1} className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">«</button>
+                <nav className="relative z-0 inline-flex rounded-md -space-x-px shadow-sm" aria-label="Pagination">
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span className="sr-only">Previous</span>
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  </button>
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum;
                     if (totalPages <= 5) pageNum = i + 1;
                     else if (page <= 3) pageNum = i + 1;
                     else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
                     else pageNum = page - 2 + i;
+                    
                     return (
-                      <button key={pageNum} onClick={() => setPage(pageNum)} className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${page === pageNum ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}>{pageNum}</button>
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          page === pageNum
+                            ? 'z-10 bg-blue-900 border-blue-900 text-white'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
                     );
                   })}
-                  <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">»</button>
+                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span className="sr-only">Next</span>
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                  </button>
                 </nav>
               </div>
             </div>
@@ -456,7 +552,7 @@ export function TransformerCreateModal({ open, onClose, onSubmit, name, setName,
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Capacity (MVA) *</label>
+            <label className="block text-sm font-medium text-gray-700">Capacity (kVA) *</label>
             <input type="number" value={capacity === '' ? '' : String(capacity)} onChange={(e) => setCapacity(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter capacity" className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
           </div>
           <div className="flex items-center gap-2">
@@ -504,7 +600,7 @@ export function TransformerEditModal({ open, onClose, onSubmit, name, setName, c
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter transformer name" className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Capacity (MVA) *</label>
+            <label className="block text-sm font-medium text-gray-700">Capacity (kVA) *</label>
             <input type="number" value={capacity === '' ? '' : String(capacity)} onChange={(e) => setCapacity(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter capacity" className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
           </div>
           <div className="flex items-center gap-2">
@@ -549,7 +645,7 @@ export function TransformerViewModal({ open, onClose, transformer, depots }: { o
           </div>
           <div>
             <div className="text-xs text-gray-500">Capacity</div>
-            <div className="text-sm font-medium text-gray-900">{typeof transformer?.capacity === 'number' ? transformer?.capacity : '—'}</div>
+            <div className="text-sm font-medium text-gray-900">{typeof transformer?.capacity === 'number' ? `${transformer.capacity} kVA` : '—'}</div>
           </div>
           <div>
             <div className="text-xs text-gray-500">Depot</div>
