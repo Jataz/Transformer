@@ -22,7 +22,9 @@ export default function UserMetaCard() {
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
             <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-              <img src="/images/user/owner.jpg" alt="user" />
+              <div className="flex items-center justify-center w-full h-full text-2xl font-semibold text-gray-700 bg-gray-100 dark:bg-gray-900 dark:text-gray-300">
+                {user ? (user.first_name?.[0] || user.last_name?.[0] || user.username?.[0] || "U").toUpperCase() : "U"}
+              </div>
             </div>
             <div className="order-3 xl:order-2">
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">

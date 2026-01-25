@@ -1,17 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
-import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import axios from "axios";
+import { X, User } from "lucide-react";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   
+  // Profile update state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [fullUserData, setFullUserData] = useState<any>(null);
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [profileLoading, setProfileLoading] = useState(false);
+
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -23,10 +33,90 @@ export default function UserInfoCard() {
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-  const handleSave = () => {
-    // Handle save logic for personal info here if needed
-    console.log("Saving changes...");
-    closeModal();
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.first_name || "");
+      setLastName(user.last_name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isOpen && user && token) {
+      // Fetch full user data to ensure we preserve other fields (role, region, etc.) during update
+      const fetchUserData = async () => {
+        try {
+          const headers = { Authorization: `Bearer ${token}` };
+          const response = await axios.get(`${API_BASE_URL}/api/v1/auth/users`, { headers });
+          const users = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+          const currentUser = users.find((u: any) => u.id === user.id);
+          if (currentUser) {
+            setFullUserData(currentUser);
+            // Update local state with latest from server
+            setFirstName(currentUser.firstname || currentUser.first_name || "");
+            setLastName(currentUser.lastname || currentUser.last_name || "");
+            setEmail(currentUser.email || "");
+            setPhone(currentUser.phone || "");
+          }
+        } catch (err) {
+          console.error("Failed to fetch user details", err);
+        }
+      };
+      fetchUserData();
+    }
+  }, [isOpen, user, token, API_BASE_URL]);
+
+  const handleProfileUpdate = async () => {
+    setProfileError("");
+    setProfileSuccess("");
+    setProfileLoading(true);
+
+    try {
+      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        setProfileError("First name, last name, and email are required.");
+        setProfileLoading(false);
+        return;
+      }
+
+      const headers = { 
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}` 
+      };
+
+      // Construct payload preserving existing fields
+      const payload = {
+        ...fullUserData,
+        firstname: firstName.trim(),
+        lastname: lastName.trim(),
+        email: email.trim(),
+        // Ensure these keys match what the backend expects (from Users.tsx)
+        phone: phone.trim(),
+        role: fullUserData?.role || "",
+        region: fullUserData?.region || "",
+        district: fullUserData?.district || "",
+        depot: fullUserData?.depot || "",
+      };
+
+      await axios.put(`${API_BASE_URL}/api/v1/auth/update/id/${user?.id}`, payload, { headers });
+
+      // Update AuthContext
+      updateUser({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim()
+      });
+
+      setProfileSuccess("Profile updated successfully.");
+      setTimeout(() => {
+        setProfileSuccess("");
+      }, 3000);
+    } catch (err: any) {
+      setProfileError(err.response?.data?.message || err.message || "Failed to update profile.");
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -47,7 +137,6 @@ export default function UserInfoCard() {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      // Using the endpoint found in Users.tsx: /api/v1/auth/change-password/{email}/{currentPassword}/{newPassword}
       await axios.post(
         `${API_BASE_URL}/api/v1/auth/change-password/${user?.email}/${encodeURIComponent(currentPassword)}/${encodeURIComponent(newPassword)}`, 
         null, 
@@ -75,6 +164,8 @@ export default function UserInfoCard() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setProfileError("");
+      setProfileSuccess("");
       closeModal();
   }
 
@@ -119,16 +210,7 @@ export default function UserInfoCard() {
                 Phone
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                —
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Bio
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                —
+                {user?.phone ?? "—"}
               </p>
             </div>
           </div>
@@ -157,57 +239,98 @@ export default function UserInfoCard() {
         </button>
       </div>
 
-      <Modal isOpen={isOpen} onClose={handleClose} className="max-w-[700px] m-4">
-        <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
-          <div className="px-2 pr-14">
-            <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Edit Personal Information
-            </h4>
-            <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Update your details to keep your profile up-to-date.
-            </p>
-          </div>
-          
-          <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
-            <form className="flex flex-col mb-8">
-              <div>
-                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
-                  Personal Information
-                </h5>
-
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>First Name</Label>
-                    <Input type="text" value={user?.first_name ?? ""} disabled className="bg-gray-50 dark:bg-gray-800" />
+      <Modal isOpen={isOpen} onClose={handleClose} className="max-w-2xl w-full p-0 overflow-hidden rounded-2xl bg-white shadow-xl transition-all" backdropBlur={true}>
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-6">
+            <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-blue-100">Profile</h3>
+                <button 
+                    type="button"
+                    onClick={handleClose}
+                    className="rounded-full bg-white/20 p-1 text-white hover:bg-white/30 transition-colors focus:outline-none"
+                >
+                    <X className="h-5 w-5" />
+                </button>
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white">
+                    <User className="h-6 w-6" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">Edit Personal Information</h2>
+            </div>
+        </div>
+        
+        <div className="p-6 overflow-y-auto max-h-[80vh]">
+          <form className="flex flex-col space-y-6">
+            <div>
+              <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                Personal Information
+              </h5>
+              
+              {profileError && (
+                  <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
+                      {profileError}
                   </div>
-
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Last Name</Label>
-                    <Input type="text" value={user?.last_name ?? ""} disabled className="bg-gray-50 dark:bg-gray-800" />
+              )}
+              
+              {profileSuccess && (
+                  <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-lg text-sm border border-green-100">
+                      {profileSuccess}
                   </div>
+              )}
 
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Email Address</Label>
-                    <Input type="text" value={user?.email ?? ""} disabled className="bg-gray-50 dark:bg-gray-800" />
-                  </div>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>First Name</Label>
+                  <Input 
+                    type="text" 
+                    value={firstName} 
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="bg-white dark:bg-gray-900" 
+                  />
+                </div>
 
-                  <div className="col-span-2 lg:col-span-1">
-                    <Label>Phone</Label>
-                    <Input type="text" value="" placeholder="Phone number" />
-                  </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Last Name</Label>
+                  <Input 
+                    type="text" 
+                    value={lastName} 
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="bg-white dark:bg-gray-900" 
+                  />
+                </div>
 
-                  <div className="col-span-2">
-                    <Label>Bio</Label>
-                    <Input type="text" value="" placeholder="Bio" />
-                  </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Email Address</Label>
+                  <Input 
+                    type="text" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-white dark:bg-gray-900" 
+                  />
+                </div>
+
+                <div className="col-span-2 lg:col-span-1">
+                  <Label>Phone</Label>
+                  <Input 
+                    type="text" 
+                    value={phone} 
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="bg-white dark:bg-gray-900" 
+                  />
                 </div>
               </div>
-              {/* <div className="flex items-center gap-3 mt-6 lg:justify-end">
-                <Button size="sm" onClick={handleSave}>
-                  Save Info
-                </Button>
-              </div> */}
-            </form>
+              
+              <div className="mt-4 flex justify-end">
+                <button 
+                    type="button" 
+                    onClick={handleProfileUpdate}
+                    disabled={profileLoading}
+                    className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px]"
+                >
+                    {profileLoading ? "Saving..." : "Save Details"}
+                </button>
+              </div>
+            </div>
 
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
@@ -215,13 +338,13 @@ export default function UserInfoCard() {
                 </h5>
                 
                 {passwordError && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                    <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
                         {passwordError}
                     </div>
                 )}
                 
                 {passwordSuccess && (
-                    <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-lg text-sm">
+                    <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-lg text-sm border border-green-100">
                         {passwordSuccess}
                     </div>
                 )}
@@ -269,17 +392,26 @@ export default function UserInfoCard() {
                         />
                     </div>
                 </div>
-                
-                <div className="flex items-center gap-3 mt-6 lg:justify-end">
-                    <Button size="sm" variant="outline" onClick={handleClose}>
-                        Close
-                    </Button>
-                    <Button size="sm" onClick={handlePasswordChange} disabled={loading}>
-                        {loading ? "Changing..." : "Change Password"}
-                    </Button>
-                </div>
             </div>
-          </div>
+
+            <div className="mt-8 flex items-center justify-end gap-3 border-t border-gray-100 pt-6">
+                <button 
+                    type="button" 
+                    onClick={handleClose}
+                    className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-gray-300 shadow-sm"
+                >
+                    Close
+                </button>
+                <button 
+                    type="button" 
+                    onClick={handlePasswordChange}
+                    disabled={loading}
+                    className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px]"
+                >
+                    {loading ? "Changing..." : "Change Password"}
+                </button>
+            </div>
+          </form>
         </div>
       </Modal>
     </div>
