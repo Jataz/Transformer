@@ -170,10 +170,23 @@ export default function RegionsIndex() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-white shadow-sm dark:bg-gray-900">
+      <div className="rounded-xl bg-white shadow-sm dark:bg-gray-900 border border-gray-100">
         <div className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <input type="text" placeholder="Search..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm w-[240px]" />
+            <div className="flex-1 max-w-md relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search regions..." 
+              value={search} 
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }} 
+              className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-md leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm" 
+            />
+          </div>
             <select aria-label="Batch Action" onChange={(e) => { const v = e.target.value; e.currentTarget.selectedIndex = 0; if (v === 'delete' && selectedIds.length) { if (confirm(`Delete ${selectedIds.length} selected region(s)?`)) { /* handle in future */ } } }} className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white">
               <option value="">Batch Action</option>
               <option value="delete">Delete Selected</option>
@@ -185,16 +198,16 @@ export default function RegionsIndex() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full">
+            <thead className="bg-white border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3"><input type="checkbox" aria-label="Select all" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={(e) => toggleSelectAll(e.target.checked)} className="h-4 w-4 rounded border-gray-300" /></th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Districts</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                <th className="px-6 py-4"><input type="checkbox" aria-label="Select all" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={(e) => toggleSelectAll(e.target.checked)} className="h-4 w-4 rounded border-gray-300" /></th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Districts</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {paginated.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-sm text-gray-600">
@@ -209,9 +222,9 @@ export default function RegionsIndex() {
                 paginated.map((region) => (
                   <tr key={region.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4"><input type="checkbox" checked={selectedIds.includes(region.id)} onChange={(e) => toggleSelectOne(region.id, e.target.checked)} className="h-4 w-4 rounded border-gray-300" /></td>
-                    <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900">{region.name}</div></td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm"><span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">{Array.isArray(region.districts) ? region.districts.length : 0}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-700">{region.name}</div></td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm"><span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800">{Array.isArray(region.districts) ? region.districts.length : 0}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                       <ActionMenu
                         placement="bottom-end"
                         onView={() => openView(region)}
@@ -240,7 +253,7 @@ export default function RegionsIndex() {
                     else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
                     else pageNum = page - 2 + i;
                     return (
-                      <button key={pageNum} onClick={() => setPage(pageNum)} className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${page === pageNum ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}>{pageNum}</button>
+                      <button key={pageNum} onClick={() => setPage(pageNum)} className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${page === pageNum ? 'z-10 bg-blue-900 border-blue-900 text-white' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}`}>{pageNum}</button>
                     );
                   })}
                   <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">»</button>
@@ -267,11 +280,11 @@ export function RegionsCreateModal({ open, onClose, onSubmit, name, setName, sav
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-black dark:text-white">Create Region</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name *</label>
-            <div className="relative group">
-              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 016 6v1a6 6 0 11-12 0V8a6 6 0 016-6z"/></svg>
-              </span>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
+            <div className="relative rounded-md">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 016 6v1a6 6 0 11-12 0V8a6 6 0 016-6z"/></svg>
+              </div>
               <input
                 type="text"
                 value={name}
@@ -279,7 +292,7 @@ export function RegionsCreateModal({ open, onClose, onSubmit, name, setName, sav
                 placeholder="Enter region name"
                 aria-invalid={!!error}
                 aria-describedby={error ? 'create-error' : undefined}
-                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 pl-10 pr-3 py-2 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm hover:border-gray-400"
+                className="block w-full rounded-lg border border-gray-200 bg-gray-50 pl-10 pr-3 py-2.5 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
             {!error && <p className="mt-1 text-xs text-gray-500">At least 2 characters</p>}
@@ -306,11 +319,11 @@ export function RegionsEditModal({ open, onClose, onSubmit, name, setName, savin
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-black dark:text-white">Edit Region</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name *</label>
-            <div className="relative group">
-              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 016 6v1a6 6 0 11-12 0  V8a6 6 0 016-6z"/></svg>
-              </span>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
+            <div className="relative rounded-md">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 016 6v1a6 6 0 11-12 0  V8a6 6 0 016-6z"/></svg>
+              </div>
               <input
                 type="text"
                 value={name}
@@ -318,7 +331,7 @@ export function RegionsEditModal({ open, onClose, onSubmit, name, setName, savin
                 placeholder="Enter region name"
                 aria-invalid={!!error}
                 aria-describedby={error ? 'edit-error' : undefined}
-                className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 pl-10 pr-3 py-2 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm hover:border-gray-400"
+                className="block w-full rounded-lg border border-gray-200 bg-gray-50 pl-10 pr-3 py-2.5 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
             {!error && <p className="mt-1 text-xs text-gray-500">At least 2 characters</p>}
