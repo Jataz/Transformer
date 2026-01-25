@@ -126,7 +126,7 @@ export default function Users() {
   const fetchDepotsOptions = useCallback(async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${API_BASE_URL}/api/v1/auth/users`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/v1/depots`, { headers });
       const list = normalizeList<DepotOption>(res.data);
       setDepots(list.map(d => ({ id: d.id, name: d.name, districtId: d.district?.id ?? d.districtId, district: d.district })));
     } catch {
@@ -195,6 +195,11 @@ export default function Users() {
       if (!firstnameInput.trim()) { setFormError('Enter first name'); return; }
       if (!lastnameInput.trim()) { setFormError('Enter last name'); return; }
       if (!emailInput.trim()) { setFormError('Enter email'); return; }
+      if (!passwordInput) { setFormError('Enter password'); return; }
+      if (!roleInput) { setFormError('Select a role'); return; }
+      if (!regionInput) { setFormError('Select a region'); return; }
+      if (!districtInput) { setFormError('Select a district'); return; }
+      if (!depotInput) { setFormError('Select a depot'); return; }
       setSavingCreate(true);
       setFormError(null);
       const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -202,6 +207,7 @@ export default function Users() {
         firstname: firstnameInput.trim(),
         lastname: lastnameInput.trim(),
         email: emailInput.trim(),
+        password: passwordInput,
         phone: phoneInput.trim(),
         role: roleInput.trim(),
         region: regionInput.trim(),
@@ -212,6 +218,7 @@ export default function Users() {
       setFirstnameInput('');
       setLastnameInput('');
       setEmailInput('');
+      setPasswordInput('');
       setPhoneInput('');
       setRoleInput('');
       setRegionInput('');
@@ -236,6 +243,10 @@ export default function Users() {
       if (!firstnameInput.trim()) { setFormError('Enter first name'); return; }
       if (!lastnameInput.trim()) { setFormError('Enter last name'); return; }
       if (!emailInput.trim()) { setFormError('Enter email'); return; }
+      if (!roleInput) { setFormError('Select a role'); return; }
+      if (!regionInput) { setFormError('Select a region'); return; }
+      if (!districtInput) { setFormError('Select a district'); return; }
+      if (!depotInput) { setFormError('Select a depot'); return; }
       setSavingEdit(true);
       setFormError(null);
       const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
