@@ -110,7 +110,7 @@ const navGroups: NavGroup[] = [
 ];
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen } = useSidebar();
   const location = useLocation();
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
 
@@ -129,19 +129,17 @@ const AppSidebar: React.FC = () => {
         ${isExpanded || isMobileOpen ? "w-[200px]" : "w-[90px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 font-outfit`}
-      onMouseEnter={() => !isExpanded && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Logo Section */}
-      <div className={`h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800 ${
-        !isExpanded && !isHovered && !isMobileOpen ? "justify-center px-0" : ""
+      <div className={`h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800 ${
+        !isExpanded && !isMobileOpen ? "justify-center px-0" : ""
       }`}>
         <Link to="/" className="flex items-center gap-3">
             {/* You can add a logo image here if available */}
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 text-white">
               <Zap className="w-5 h-5" />
             </div>
-            {(isExpanded || isHovered || isMobileOpen) && (
+            {(isExpanded || isMobileOpen) && (
               <span className="text-xl font-bold text-gray-900 dark:text-white">TAIS</span>
             )}
         </Link>
@@ -151,7 +149,7 @@ const AppSidebar: React.FC = () => {
         <nav className="px-4 space-y-6">
           {navGroups.map((group, groupIndex) => (
             <div key={groupIndex}>
-              {(isExpanded || isHovered || isMobileOpen) && group.items.length > 0 && (
+              {(isExpanded || isMobileOpen) && group.items.length > 0 && (
                 <h3 className="mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">
                   {group.name}
                 </h3>
@@ -165,6 +163,8 @@ const AppSidebar: React.FC = () => {
                         <button
                           onClick={() => toggleSubmenu(`${groupIndex}-${index}`)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                            !isExpanded && !isMobileOpen ? "justify-center px-2" : ""
+                          } ${
                             isActive(item.path || "") 
                               ? "bg-blue-600 text-white" 
                               : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -173,7 +173,7 @@ const AppSidebar: React.FC = () => {
                           <span className={`${isActive(item.path || "") ? "text-white" : "text-gray-500"}`}>
                             {item.icon}
                           </span>
-                          {(isExpanded || isHovered || isMobileOpen) && (
+                          {(isExpanded || isMobileOpen) && (
                             <>
                               <span className="flex-1 text-sm font-medium text-left">{item.name}</span>
                               <ChevronDown
@@ -185,7 +185,7 @@ const AppSidebar: React.FC = () => {
                           )}
                         </button>
                         
-                        {(isExpanded || isHovered || isMobileOpen) && openSubmenus[`${groupIndex}-${index}`] && (
+                        {(isExpanded || isMobileOpen) && openSubmenus[`${groupIndex}-${index}`] && (
                           <ul className="pl-9 space-y-1">
                             {item.subItems.map((subItem, subIndex) => (
                               <li key={subIndex}>
@@ -208,15 +208,17 @@ const AppSidebar: React.FC = () => {
                       <Link
                         to={item.path || "#"}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                          !isExpanded && !isMobileOpen ? "justify-center px-2" : ""
+                        } ${
                           isActive(item.path || "")
-                            ? "bg-blue-600 text-white shadow-sm"
+                            ? "bg-blue-600 text-white"
                             : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                         }`}
                       >
-                        <span className={`${isActive(item.path || "") ? "text-white" : "text-gray-500 group-hover:text-gray-900"}`}>
+                        <span className={`${isActive(item.path || "") ? "text-white" : "text-gray-500"}`}>
                           {item.icon}
                         </span>
-                        {(isExpanded || isHovered || isMobileOpen) && (
+                        {(isExpanded || isMobileOpen) && (
                           <span className="text-sm font-medium">{item.name}</span>
                         )}
                       </Link>
