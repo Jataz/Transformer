@@ -5,7 +5,7 @@ import type { AxiosError } from 'axios';
 import Alert from '../../components/ui/alert/Alert';
 import { ActionMenu } from '../../components/ui/dropdown/ActionMenu';
 import Button from '../../components/ui/button/Button';
-import { Plus } from 'lucide-react';
+import { Plus, X, Search, Filter, Loader2 } from 'lucide-react';
 import { Modal } from '../../components/ui/modal';
 
 interface RegionOption { id: number; name: string }
@@ -24,10 +24,7 @@ interface User {
   depot?: string;
 }
 
- 
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
-const ITEMS_PER_PAGE = 10;
 
 export default function Users() {
   const { token } = useAuth();
@@ -35,13 +32,18 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showView, setShowView] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [active, setActive] = useState<User | null>(null);
+
+  // Form states
   const [firstnameInput, setFirstnameInput] = useState('');
   const [lastnameInput, setLastnameInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
@@ -51,22 +53,26 @@ export default function Users() {
   const [regionInput, setRegionInput] = useState('');
   const [districtInput, setDistrictInput] = useState('');
   const [depotInput, setDepotInput] = useState('');
+  
   const [regions, setRegions] = useState<RegionOption[]>([]);
   const [districts, setDistricts] = useState<DistrictOption[]>([]);
   const [depots, setDepots] = useState<DepotOption[]>([]);
+  
   const [selectedRegionId, setSelectedRegionId] = useState<number | ''>('');
   const [selectedDistrictId, setSelectedDistrictId] = useState<number | ''>('');
   const [selectedDepotId, setSelectedDepotId] = useState<number | ''>('');
+  
   const [savingCreate, setSavingCreate] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ variant: 'success' | 'error' | 'info' | 'warning'; title: string; message: string } | null>(null);
+  
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordTarget, setPasswordTarget] = useState<User | null>(null);
-
-  
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -158,15 +164,13 @@ export default function Users() {
     );
   });
 
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const paginatedUsers = filteredUsers.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
+    (page - 1) * pageSize,
+    page * pageSize
   );
 
   // Form handlers
-  
-
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     setActive(user);
@@ -282,11 +286,32 @@ export default function Users() {
     }
   };
 
-  
+  const openDelete = (user: User) => {
+    setUserToDelete(user);
+    setDeleteError(null);
+    setShowDelete(true);
+  };
 
-  // Delete action removed: no delete endpoint provided
-
-  
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      setDeleting(true);
+      setDeleteError(null);
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.delete(`${API_BASE_URL}/api/v1/auth/users/${userToDelete.id}`, { headers });
+      setShowDelete(false);
+      setUserToDelete(null);
+      await fetchData();
+      setNotice({ variant: 'success', title: 'User deleted', message: 'The user has been deleted successfully.' });
+      setTimeout(() => setNotice(null), 4000);
+    } catch (err) {
+      const error = err as AxiosError;
+      setDeleteError(error.message || 'Failed to delete user');
+      // If 404 or similar, maybe already deleted, but let's assume standard error handling
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const openChangePassword = (user: User) => {
     setPasswordTarget(user);
@@ -305,6 +330,8 @@ export default function Users() {
       setPasswordTarget(null);
       setCurrentPassword('');
       setNewPassword('');
+      setNotice({ variant: 'success', title: 'Password changed', message: 'User password has been updated.' });
+      setTimeout(() => setNotice(null), 4000);
     } catch (err) {
       const error = err as AxiosError;
       setError(error.message || 'Failed to change password');
@@ -314,7 +341,7 @@ export default function Users() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading users...</div>
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -332,8 +359,9 @@ export default function Users() {
       {notice && (
         <Alert variant={notice.variant} title={notice.title} message={notice.message} />
       )}
-      {/* Header and search */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      
+      {/* Filter Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
           <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -342,76 +370,119 @@ export default function Users() {
         </div>
         
         <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Show</span>
+            <select 
+              value={pageSize} 
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} 
+              className="text-sm border-none bg-transparent font-medium focus:ring-0 cursor-pointer"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+
+          <div className="relative flex-1 sm:flex-none">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="pl-9 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+          
+          <Button 
+            size="sm" 
+            onClick={() => {
+              setSearch('');
               setPage(1);
             }}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          />
-          
-          <Button size="xs" onClick={() => {
-            setFirstnameInput('');
-            setLastnameInput('');
-            setEmailInput('');
-            setPhoneInput('');
-            setRoleInput('');
-            setRegionInput('');
-            setDistrictInput('');
-            setDepotInput('');
-            setSelectedRegionId('');
-            setSelectedDistrictId('');
-            setSelectedDepotId('');
-            setActive(null);
-            setFormError(null);
-            setShowCreate(true);
-          }} startIcon={<Plus className="w-4 h-4" />}>Add User</Button>
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            Reset
+          </Button>
+
+          <Button 
+            size="sm" 
+            onClick={() => {
+              setFirstnameInput('');
+              setLastnameInput('');
+              setEmailInput('');
+              setPhoneInput('');
+              setRoleInput('');
+              setRegionInput('');
+              setDistrictInput('');
+              setDepotInput('');
+              setSelectedRegionId('');
+              setSelectedDistrictId('');
+              setSelectedDepotId('');
+              setActive(null);
+              setFormError(null);
+              setShowCreate(true);
+            }} 
+            startIcon={<Plus className="w-4 h-4" />}
+          >
+            Add User
+          </Button>
         </div>
       </div>
 
       {/* Users table */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedUsers.map((user) => {
-                return (
-                  <tr key={user.id} className="hover:bg-gray-50">
+              {paginatedUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    No users found matching your search.
+                  </td>
+                </tr>
+              ) : (
+                paginatedUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{user.firstname ?? ''} {user.lastname ?? ''}</div>
+                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold mr-3">
+                          {user.firstname?.[0] || user.email[0].toUpperCase()}
                         </div>
+                        <div className="text-sm font-medium text-gray-900">{user.firstname ?? ''} {user.lastname ?? ''}</div>
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.email}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
+                        user.role === 'USER' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {user.role ?? '—'}
+                      </span>
                     </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role ?? '—'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phone ?? '—'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <ActionMenu
                         placement="bottom"
                         onView={() => { setActive(user); setShowView(true); }}
                         onEdit={() => handleEditUser(user)}
+                        onDelete={() => openDelete(user)}
                         extras={[{
                           label: 'Change Password',
                           onClick: () => openChangePassword(user),
@@ -424,8 +495,8 @@ export default function Users() {
                       />
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -433,41 +504,22 @@ export default function Users() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              >
-                Next
-              </button>
-            </div>
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{(page - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+                  Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to{' '}
                   <span className="font-medium">
-                    {Math.min(page * ITEMS_PER_PAGE, filteredUsers.length)}
+                    {Math.min(page * pageSize, filteredUsers.length)}
                   </span>{' '}
                   of <span className="font-medium">{filteredUsers.length}</span> results
                 </p>
               </div>
               <div>
-                <nav
-                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                  aria-label="Pagination"
-                >
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                   <button
                     onClick={() => setPage(1)}
                     disabled={page === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
                     <span className="sr-only">First</span>
                     &laquo;
@@ -475,7 +527,7 @@ export default function Users() {
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Previous
                   </button>
@@ -508,14 +560,14 @@ export default function Users() {
                   <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Next
                   </button>
                   <button
                     onClick={() => setPage(totalPages)}
                     disabled={page === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
                     <span className="sr-only">Last</span>
                     &raquo;
@@ -527,185 +579,49 @@ export default function Users() {
         )}
       </div>
 
-      {false && (
-        <div className="fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-black/60 transition-opacity" aria-hidden="true" onClick={() => { setShowCreate(false); setShowEdit(false); }}></div>
-
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
-              <form onSubmit={editingUser ? submitEdit : submitCreate}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                      <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        {editingUser ? 'Edit User' : 'Create New User'}
-                      </h3>
-                      <div className="mt-5 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                        <div className="sm:col-span-3">
-                          <label htmlFor="firstname" className="block text-sm font-medium text-gray-700">First Name *</label>
-                          <div className="mt-1">
-                            <input type="text" name="firstname" id="firstname" required value={firstnameInput} onChange={(e) => setFirstnameInput(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" />
-                          </div>
-                        </div>
-                        {formError && (
-                          <div className="sm:col-span-6 text-xs text-red-600">{formError}</div>
-                        )}
-
-                        {/* Email */}
-                        <div className="sm:col-span-3">
-                          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                            Email *
-                          </label>
-                          <div className="mt-1">
-                            <input type="email" name="email" id="email" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" />
-                          </div>
-                        </div>
-
-                        <div className="sm:col-span-3">
-                          <label htmlFor="lastname" className="block text-sm font-medium text-gray-700">Last Name *</label>
-                          <div className="mt-1">
-                            <input type="text" name="lastname" id="lastname" required value={lastnameInput} onChange={(e) => setLastnameInput(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" />
-                          </div>
-                        </div>
-
-                        <div className="sm:col-span-3">
-                          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                          <div className="mt-1">
-                            <input type="text" name="phone" id="phone" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" />
-                          </div>
-                        </div>
-
-                        
-
-                        
-
-                        
-
-                        
-                        <div className="sm:col-span-3">
-                          <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-                          <div className="mt-1">
-                            <select name="role" id="role" value={roleInput} onChange={(e) => setRoleInput(e.target.value)} className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                              <option value="">Select role</option>
-                              <option value="ADMIN">ADMIN</option>
-                              <option value="USER">USER</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div className="sm:col-span-3">
-                          <label htmlFor="region" className="block text-sm font-medium text-gray-700">Region</label>
-                          <select
-                            id="region"
-                            value={selectedRegionId}
-                            onChange={(e) => {
-                              const id = e.target.value ? Number(e.target.value) : '';
-                              setSelectedRegionId(id as number | '');
-                              const name = regions.find(r => r.id === Number(e.target.value))?.name ?? '';
-                              setRegionInput(name);
-                              setSelectedDistrictId('');
-                              setSelectedDepotId('');
-                              setDistrictInput('');
-                              setDepotInput('');
-                            }}
-                            className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
-                          >
-                            <option value="">Select region</option>
-                            {regions.map(r => (
-                              <option key={r.id} value={r.id}>{r.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="sm:col-span-3">
-                          <label htmlFor="district" className="block text-sm font-medium text-gray-700">District</label>
-                          <select
-                            id="district"
-                            value={selectedDistrictId}
-                            onChange={(e) => {
-                              const id = e.target.value ? Number(e.target.value) : '';
-                              setSelectedDistrictId(id as number | '');
-                              const name = districts.find(d => d.id === Number(e.target.value))?.name ?? '';
-                              setDistrictInput(name);
-                              setSelectedDepotId('');
-                              setDepotInput('');
-                            }}
-                            className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
-                          >
-                            <option value="">Select district</option>
-                            {(selectedRegionId ? districts.filter(d => (d.region?.id ?? d.regionId) === selectedRegionId) : districts).map(d => (
-                              <option key={d.id} value={d.id}>{d.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="sm:col-span-3">
-                          <label htmlFor="depot" className="block text-sm font-medium text-gray-700">Depot</label>
-                          <select
-                            id="depot"
-                            value={selectedDepotId}
-                            onChange={(e) => {
-                              const id = e.target.value ? Number(e.target.value) : '';
-                              setSelectedDepotId(id as number | '');
-                              const name = depots.find(dp => dp.id === Number(e.target.value))?.name ?? '';
-                              setDepotInput(name);
-                            }}
-                            className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
-                          >
-                            <option value="">Select depot</option>
-                            {(selectedDistrictId ? depots.filter(dp => (dp.district?.id ?? dp.districtId) === selectedDistrictId) : depots).map(dp => (
-                              <option key={dp.id} value={dp.id}>{dp.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button type="submit" disabled={editingUser ? savingEdit : savingCreate} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">{editingUser ? 'Update' : 'Create'}</button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowCreate(false); setShowEdit(false); }}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+      {/* Create/Edit Modal */}
+      <Modal isOpen={showCreate || showEdit} onClose={() => { setShowCreate(false); setShowEdit(false); }} className="max-w-3xl w-full p-0 overflow-hidden rounded-xl" overlayClassName="bg-black/60 backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">
+            {editingUser ? 'Edit User' : 'Create New User'}
+          </h3>
+          <button 
+            type="button"
+            onClick={() => { setShowCreate(false); setShowEdit(false); }}
+            className="rounded-full bg-white/20 p-1 text-white hover:bg-white/30 transition-colors focus:outline-none"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
-      )}
-      <Modal isOpen={showCreate || showEdit} onClose={() => { setShowCreate(false); setShowEdit(false); }} className="max-w-3xl w-full p-6" overlayClassName="bg-black/60" backdropBlur={false}>
-        <form onSubmit={editingUser ? submitEdit : submitCreate}>
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-black dark:text-white">{editingUser ? 'Edit User' : 'Create New User'}</h3>
+        
+        <div className="p-6">
+          <form onSubmit={editingUser ? submitEdit : submitCreate}>
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
               <div className="sm:col-span-3">
                 <label htmlFor="firstname" className="block text-sm font-medium text-gray-700">First Name *</label>
-                <input type="text" name="firstname" id="firstname" placeholder="Enter first name" required value={firstnameInput} onChange={(e) => setFirstnameInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+                <input type="text" name="firstname" id="firstname" placeholder="Enter first name" required value={firstnameInput} onChange={(e) => setFirstnameInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
               </div>
               <div className="sm:col-span-3">
                 <label htmlFor="lastname" className="block text-sm font-medium text-gray-700">Last Name *</label>
-                <input type="text" name="lastname" id="lastname" placeholder="Enter last name" required value={lastnameInput} onChange={(e) => setLastnameInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+                <input type="text" name="lastname" id="lastname" placeholder="Enter last name" required value={lastnameInput} onChange={(e) => setLastnameInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
               </div>
               <div className="sm:col-span-3">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email *</label>
-                <input type="email" name="email" id="email" placeholder="Enter email" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+                <input type="email" name="email" id="email" placeholder="Enter email" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
               </div>
               {!editingUser && (
                 <div className="sm:col-span-3">
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password *</label>
-                  <input type="password" name="password" id="password" placeholder="Enter password" required value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+                  <input type="password" name="password" id="password" placeholder="Enter password" required value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
                 </div>
               )}
               <div className="sm:col-span-3">
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                <input type="text" name="phone" id="phone" placeholder="Enter phone" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+                <input type="text" name="phone" id="phone" placeholder="Enter phone" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
               </div>
               <div className="sm:col-span-3">
                 <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-                <select name="role" id="role" value={roleInput} onChange={(e) => setRoleInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm">
+                <select name="role" id="role" value={roleInput} onChange={(e) => setRoleInput(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm">
                   <option value="">Select role</option>
                   <option value="ADMIN">ADMIN</option>
                   <option value="BUSINESSMANAGER">BUSINESSMANAGER</option>
@@ -735,7 +651,7 @@ export default function Users() {
                     setDistrictInput('');
                     setDepotInput('');
                   }}
-                  className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
                 >
                   <option value="">Select region</option>
                   {regions.map(r => (
@@ -756,7 +672,7 @@ export default function Users() {
                     setSelectedDepotId('');
                     setDepotInput('');
                   }}
-                  className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
                 >
                   <option value="">Select district</option>
                   {(selectedRegionId ? districts.filter(d => (d.region?.id ?? d.regionId) === selectedRegionId) : districts).map(d => (
@@ -775,7 +691,7 @@ export default function Users() {
                     const name = depots.find(dp => dp.id === Number(e.target.value))?.name ?? '';
                     setDepotInput(name);
                   }}
-                  className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm"
                 >
                   <option value="">Select depot</option>
                   {(selectedDistrictId ? depots.filter(dp => (dp.district?.id ?? dp.districtId) === selectedDistrictId) : depots).map(dp => (
@@ -784,136 +700,150 @@ export default function Users() {
                 </select>
               </div>
               {formError && (
-                <div className="sm:col-span-6 text-xs text-red-600">{formError}</div>
+                <div className="sm:col-span-6 text-sm text-red-600 bg-red-50 p-2 rounded">{formError}</div>
               )}
             </div>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => { setShowCreate(false); setShowEdit(false); }} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">Cancel</button>
-              <button type="submit" disabled={editingUser ? savingEdit : savingCreate} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">{editingUser ? 'Update' : 'Create'}</button>
+            <div className="mt-8 flex justify-end gap-3">
+              <button type="button" onClick={() => { setShowCreate(false); setShowEdit(false); }} className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancel</button>
+              <button type="submit" disabled={editingUser ? savingEdit : savingCreate} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 flex items-center gap-2">
+                {(editingUser ? savingEdit : savingCreate) && <Loader2 className="h-4 w-4 animate-spin" />}
+                {editingUser ? 'Update User' : 'Create User'}
+              </button>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </Modal>
 
-      {false && (
-        <div className="fixed inset-0 overflow-y-auto" role="dialog" aria-modal="true">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-black/60 transition-opacity" aria-hidden="true" onClick={() => setShowChangePassword(false)}></div>
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
-              <form onSubmit={submitChangePassword}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                      <h3 className="text-lg leading-6 font-medium text-gray-900">Change Password</h3>
-                      <div className="mt-5 space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Current Password</label>
-                          <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">New Password</label>
-                          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button type="submit" className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Update Password</button>
-                  <button type="button" onClick={() => setShowChangePassword(false)} className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
+      {/* Change Password Modal */}
+      <Modal isOpen={showChangePassword && !!passwordTarget} onClose={() => setShowChangePassword(false)} className="max-w-md w-full p-0 overflow-hidden rounded-xl" overlayClassName="bg-black/60 backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">Change Password</h3>
+          <button 
+            type="button"
+            onClick={() => setShowChangePassword(false)}
+            className="rounded-full bg-white/20 p-1 text-white hover:bg-white/30 transition-colors focus:outline-none"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
-      )}
-      <Modal isOpen={showChangePassword && !!passwordTarget} onClose={() => setShowChangePassword(false)} className="max-w-md w-full p-6" overlayClassName="bg-black/60" backdropBlur={false}>
-        <form onSubmit={submitChangePassword}>
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-black dark:text-white">Change Password</h3>
+        
+        <div className="p-6">
+          <form onSubmit={submitChangePassword}>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Current Password</label>
-                <input type="password" placeholder="Enter current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+                <input type="password" placeholder="Enter current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">New Password</label>
-                <input type="password" placeholder="Enter new password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+                <input type="password" placeholder="Enter new password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-sm" />
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setShowChangePassword(false)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">Cancel</button>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowChangePassword(false)} className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">Cancel</button>
               <button type="submit" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Update Password</button>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </Modal>
 
-      {false && (
-        <div className="fixed inset-0 overflow-y-auto" role="dialog" aria-modal="true">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-black/60 transition-opacity" aria-hidden="true" onClick={() => setShowView(false)}></div>
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">User Details</h3>
-                    <div className="mt-5 space-y-3 text-sm text-gray-700">
-                      <div><span className="font-medium">Name:</span> {(active.firstname ?? '')} {(active.lastname ?? '')}</div>
-                      <div><span className="font-medium">Email:</span> {active.email}</div>
-                      <div><span className="font-medium">Phone:</span> {active.phone ?? '—'}</div>
-                      <div><span className="font-medium">Role:</span> {active.role ?? '—'}</div>
-                      <div><span className="font-medium">Region:</span> {active.region ?? '—'}</div>
-                      <div><span className="font-medium">District:</span> {active.district ?? '—'}</div>
-                      <div><span className="font-medium">Depot:</span> {active.depot ?? '—'}</div>
-                    </div>
-                  </div>
-                </div>
+      {/* View User Modal */}
+      <Modal isOpen={showView && !!active} onClose={() => setShowView(false)} className="max-w-md w-full p-0 overflow-hidden rounded-xl" overlayClassName="bg-black/60 backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">User Details</h3>
+          <button 
+            type="button"
+            onClick={() => setShowView(false)}
+            className="rounded-full bg-white/20 p-1 text-white hover:bg-white/30 transition-colors focus:outline-none"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <div className="p-6">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Name</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">{(active?.firstname ?? '')} {(active?.lastname ?? '')}</div>
               </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button type="button" onClick={() => setShowView(false)} className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Close</button>
+              <div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Email</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">{active?.email ?? '—'}</div>
               </div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Phone</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">{active?.phone ?? '—'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Role</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">{active?.role ?? '—'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Region</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">{active?.region ?? '—'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">District</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">{active?.district ?? '—'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Depot</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">{active?.depot ?? '—'}</div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button type="button" onClick={() => setShowView(false)} className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">Close</button>
             </div>
           </div>
         </div>
-      )}
-      <Modal isOpen={showView && !!active} onClose={() => setShowView(false)} className="max-w-md w-full p-6" overlayClassName="bg-black/60" backdropBlur={false}>
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-black dark:text-white">User Details</h3>
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <div className="text-xs text-gray-500">Name</div>
-              <div className="text-sm font-medium text-gray-900">{(active?.firstname ?? '')} {(active?.lastname ?? '')}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Email</div>
-              <div className="text-sm font-medium text-gray-900">{active?.email ?? '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Phone</div>
-              <div className="text-sm font-medium text-gray-900">{active?.phone ?? '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Role</div>
-              <div className="text-sm font-medium text-gray-900">{active?.role ?? '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Region</div>
-              <div className="text-sm font-medium text-gray-900">{active?.region ?? '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">District</div>
-              <div className="text-sm font-medium text-gray-900">{active?.district ?? '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Depot</div>
-              <div className="text-sm font-medium text-gray-900">{active?.depot ?? '—'}</div>
-            </div>
+      </Modal>
+
+      {/* Delete User Modal */}
+      <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} className="max-w-md w-full p-0 overflow-hidden rounded-xl" overlayClassName="bg-black/60 backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-red-600 to-red-800 px-6 py-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-white">Delete User</h3>
+            <button 
+              type="button"
+              onClick={() => setShowDelete(false)}
+              className="rounded-full bg-white/20 p-1 text-white hover:bg-white/30 transition-colors focus:outline-none"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <div className="flex justify-end">
-            <button type="button" onClick={() => setShowView(false)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">Close</button>
+          <p className="mt-2 text-sm text-red-100">This action cannot be undone.</p>
+        </div>
+        
+        <div className="p-6">
+          <div className="mb-6">
+            <p className="text-gray-700">
+              Are you sure you want to delete <span className="font-bold">{userToDelete?.firstname} {userToDelete?.lastname}</span>?
+            </p>
+            {deleteError && (
+              <div className="mt-3 text-sm text-red-600 bg-red-50 p-2 rounded">
+                {deleteError}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-end gap-3">
+            <button 
+              type="button"
+              onClick={() => setShowDelete(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            >
+              Cancel
+            </button>
+            <button 
+              type="button"
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center gap-2 disabled:opacity-50"
+            >
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {deleting ? 'Deleting...' : 'Delete User'}
+            </button>
           </div>
         </div>
       </Modal>
