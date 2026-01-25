@@ -113,7 +113,12 @@ export default function UserAddressCard() {
 
                 <div>
                   <Label>City/State</Label>
-                  <Input type="text" value={locationLabel} />
+                  <Input 
+                    type="text" 
+                    value={locationLabel} 
+                    disabled 
+                    className="bg-gray-50 dark:bg-gray-800 cursor-not-allowed text-gray-500"
+                  />
                 </div>
 
                 <div>

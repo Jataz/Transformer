@@ -1,18 +1,83 @@
+import { useState } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
+import axios from "axios";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
   const handleSave = () => {
-    // Handle save logic here
+    // Handle save logic for personal info here if needed
     console.log("Saving changes...");
     closeModal();
   };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+
+    if (!currentPassword || !newPassword) {
+        setPasswordError("Please fill in all password fields.");
+        return;
+    }
+
+    setLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      // Using the endpoint found in Users.tsx: /api/v1/auth/change-password/{email}/{currentPassword}/{newPassword}
+      await axios.post(
+        `${API_BASE_URL}/api/v1/auth/change-password/${user?.email}/${encodeURIComponent(currentPassword)}/${encodeURIComponent(newPassword)}`, 
+        null, 
+        { headers }
+      );
+      
+      setPasswordSuccess("Password changed successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => {
+          setPasswordSuccess("");
+          closeModal();
+      }, 2000);
+    } catch (err: any) {
+      setPasswordError(err.response?.data?.message || err.message || "Failed to change password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+      setPasswordError("");
+      setPasswordSuccess("");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      closeModal();
+  }
+
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -92,7 +157,7 @@ export default function UserInfoCard() {
         </button>
       </div>
 
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
+      <Modal isOpen={isOpen} onClose={handleClose} className="max-w-[700px] m-4">
         <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
@@ -102,42 +167,10 @@ export default function UserInfoCard() {
               Update your details to keep your profile up-to-date.
             </p>
           </div>
-          <form className="flex flex-col">
-            <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
+          
+          <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
+            <form className="flex flex-col mb-8">
               <div>
-                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
-                  Social Links
-                </h5>
-
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                  <div>
-                    <Label>Facebook</Label>
-                    <Input
-                      type="text"
-                      value="https://www.facebook.com/PimjoHQ"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>X.com</Label>
-                    <Input type="text" value="https://x.com/PimjoHQ" />
-                  </div>
-
-                  <div>
-                    <Label>Linkedin</Label>
-                    <Input
-                      type="text"
-                      value="https://www.linkedin.com/company/pimjo"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Instagram</Label>
-                    <Input type="text" value="https://instagram.com/PimjoHQ" />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-7">
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
                   Personal Information
                 </h5>
@@ -145,40 +178,108 @@ export default function UserInfoCard() {
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
                     <Label>First Name</Label>
-                    <Input type="text" value={user?.first_name ?? ""} />
+                    <Input type="text" value={user?.first_name ?? ""} disabled className="bg-gray-50 dark:bg-gray-800" />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Last Name</Label>
-                    <Input type="text" value={user?.last_name ?? ""} />
+                    <Input type="text" value={user?.last_name ?? ""} disabled className="bg-gray-50 dark:bg-gray-800" />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Email Address</Label>
-                    <Input type="text" value={user?.email ?? ""} />
+                    <Input type="text" value={user?.email ?? ""} disabled className="bg-gray-50 dark:bg-gray-800" />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Phone</Label>
-                    <Input type="text" value="" />
+                    <Input type="text" value="" placeholder="Phone number" />
                   </div>
 
                   <div className="col-span-2">
                     <Label>Bio</Label>
-                    <Input type="text" value="" />
+                    <Input type="text" value="" placeholder="Bio" />
                   </div>
                 </div>
               </div>
+              {/* <div className="flex items-center gap-3 mt-6 lg:justify-end">
+                <Button size="sm" onClick={handleSave}>
+                  Save Info
+                </Button>
+              </div> */}
+            </form>
+
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                  Change Password
+                </h5>
+                
+                {passwordError && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                        {passwordError}
+                    </div>
+                )}
+                
+                {passwordSuccess && (
+                    <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-lg text-sm">
+                        {passwordSuccess}
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                    <div className="col-span-2">
+                        <Label>Current Password</Label>
+                        <div className="relative">
+                            <Input 
+                                type={showPassword ? "text" : "password"} 
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                placeholder="Enter current password" 
+                            />
+                            <span
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                            >
+                                {showPassword ? (
+                                    <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                ) : (
+                                    <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                )}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="col-span-2 lg:col-span-1">
+                        <Label>New Password</Label>
+                        <Input 
+                            type={showPassword ? "text" : "password"} 
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="New password" 
+                        />
+                    </div>
+
+                    <div className="col-span-2 lg:col-span-1">
+                        <Label>Confirm New Password</Label>
+                        <Input 
+                            type={showPassword ? "text" : "password"} 
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm new password" 
+                        />
+                    </div>
+                </div>
+                
+                <div className="flex items-center gap-3 mt-6 lg:justify-end">
+                    <Button size="sm" variant="outline" onClick={handleClose}>
+                        Close
+                    </Button>
+                    <Button size="sm" onClick={handlePasswordChange} disabled={loading}>
+                        {loading ? "Changing..." : "Change Password"}
+                    </Button>
+                </div>
             </div>
-            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
-                Close
-              </Button>
-              <Button size="sm" onClick={handleSave}>
-                Save Changes
-              </Button>
-            </div>
-          </form>
+          </div>
         </div>
       </Modal>
     </div>
