@@ -67,7 +67,13 @@ export default function DepotsIndex() {
       setLoading(true);
       setError(null);
       const res = await axios.get(`${API_BASE_URL}/api/v1/depots`, { headers });
-      setDepots(normalizeList(res.data));
+      const list = normalizeList(res.data);
+      setDepots(list.map((d: any) => ({
+        id: d.id,
+        name: d.name ?? '',
+        districtId: d.districtId ?? d.district_id,
+        district: d.district,
+      })) as Depot[]);
     } catch {
       setError('Failed to fetch depots');
     } finally {
@@ -179,10 +185,11 @@ export default function DepotsIndex() {
   };
 
   const filtered = depots.filter((d) => {
+    const matchesDistrict = districtFilter === '' || Number(d.districtId) === Number(districtFilter);
     const q = search.trim().toLowerCase();
-    if (!q) return true;
+    if (!q) return matchesDistrict;
     const distName = districts.find(x => x.id === (d.district?.id ?? d.districtId))?.name ?? '';
-    return d.name.toLowerCase().includes(q) || distName.toLowerCase().includes(q);
+    return matchesDistrict && (d.name.toLowerCase().includes(q) || distName.toLowerCase().includes(q));
   });
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
