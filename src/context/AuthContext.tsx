@@ -32,8 +32,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-  const AUTH_PREFIX = import.meta.env.VITE_AUTH_SERVICE_PREFIX || '/auth-service';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token') || sessionStorage.getItem('token'));
   const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
@@ -71,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (username: string, password: string, remember: boolean = true): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/auth/authenticate`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/authenticate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear stored data
     try {
       if (token) {
-        await fetch(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/auth/logout`, {
+        await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

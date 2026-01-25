@@ -84,10 +84,7 @@ export default function DashboardHome() {
   const { realtimeData, isConnected, connectionError } = useRealtimeUpdates(token);
   const [transformerSensors, setTransformerSensors] = useState<Record<number, SensorUpdate[]>>({});
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-  const AUTH_PREFIX = import.meta.env.VITE_AUTH_SERVICE_PREFIX || '/auth-service';
-  const TRANSFORMER_PREFIX = (import.meta.env as any).VITE_TRANSFORMER_SERVICE_PREFIX
-    || (AUTH_PREFIX && AUTH_PREFIX.includes('transformer') ? AUTH_PREFIX : '/transformer-service');
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   
   const hierarchy = useMemo(() => {
     const regions: Record<string, Record<string, Record<string, TransformerStatus[]>>> = {};
@@ -134,11 +131,11 @@ export default function DashboardHome() {
         };
 
         const [regionsRes, distsRes, depotsRes, transformersRes, sensorsRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/regions`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/districts`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          axios.get(`${API_BASE_URL}${AUTH_PREFIX}/api/v1/depots`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          axios.get(`${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/transformers`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          axios.get(`${API_BASE_URL}${TRANSFORMER_PREFIX}/api/v1/sensors`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          axios.get(`${API_BASE_URL}/api/v1/regions`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          axios.get(`${API_BASE_URL}/api/v1/districts`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          axios.get(`${API_BASE_URL}/api/v1/depots`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          axios.get(`${API_BASE_URL}/api/v1/transformers`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          axios.get(`${API_BASE_URL}/api/v1/sensors`, { headers: { 'Authorization': `Bearer ${token}` } }),
         ]);
 
         const regionsList = normalizeList(regionsRes.data) as { id: number; name: string }[];

@@ -9,7 +9,7 @@ interface DropdownProps {
   className?: string;
   usePortal?: boolean;
   anchorRect?: DOMRect | null;
-  placement?: "right" | "bottom";
+  placement?: "right" | "bottom" | "bottom-end";
   offset?: number;
 }
 
@@ -68,17 +68,31 @@ export const Dropdown: React.FC<DropdownProps> = ({
   }
 
   const top =
-    placement === "bottom"
-      ? Math.round((anchorRect.bottom + offset) + window.scrollY)
-      : Math.round((anchorRect.top + window.scrollY));
+    placement === "bottom" || placement === "bottom-end"
+      ? Math.round(anchorRect.bottom + offset)
+      : Math.round(anchorRect.top);
+
   const left =
     placement === "bottom"
       ? Math.round(anchorRect.left)
-      : Math.round(anchorRect.right + offset);
+      : placement === "right"
+      ? Math.round(anchorRect.right + offset)
+      : undefined;
+
+  const right =
+    placement === "bottom-end"
+      ? window.innerWidth - anchorRect.right
+      : undefined;
 
   return createPortal(
     <div
-      style={{ position: "fixed", top, left, zIndex: 1000 }}
+      style={{ 
+        position: "fixed", 
+        top, 
+        left: left !== undefined ? left : "auto", 
+        right: right !== undefined ? right : "auto",
+        zIndex: 1000 
+      }}
       className=""
     >
       {content}
